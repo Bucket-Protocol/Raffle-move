@@ -4,8 +4,8 @@
 
 Let's raffle on Sui!
 
-- [Smart Contract (Click me)](https://github.com/EasonC13?tab=repositories<br>)
-- [Front-end (Click me)](https://github.com/EasonC13/Sui-Raffle-frontend<br>)
+- [Smart Contract (Click me)](https://github.com/EasonC13/raffle-move)
+- [Front-end (Click me)](https://github.com/EasonC13/Sui-Raffle-frontend)
 - [Raffle Module on Testnet (Click me)](https://suiexplorer.com/object/0x3a464a3cdafa0a23645d2082599a87780d47259719cba4e9a0fe83a0d552f05f?module=raffle&network=testnet)
 
 ## Motivation
