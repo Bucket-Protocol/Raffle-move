@@ -36,8 +36,8 @@ module raffle::drand_lib {
     }
     public fun verify_drand_signature(sig: vector<u8>, prev_sig: vector<u8>, round: u64) {
 
-        debug::print( &sig);
-        debug::print(&prev_sig);
+        // debug::print( &sig);
+        // debug::print(&prev_sig);
         // Convert round to a byte array in big-endian order.
         let round_bytes: vector<u8> = vector[0, 0, 0, 0, 0, 0, 0, 0];
         let i = 7;
@@ -55,7 +55,7 @@ module raffle::drand_lib {
         // Verify the signature on the hash.
         
         let res = bls12381::bls12381_min_pk_verify(&sig, &DRAND_PK, &digest);
-        debug::print(&res);
+        // debug::print(&res);
         
         assert!(bls12381::bls12381_min_pk_verify(&sig, &DRAND_PK, &digest), EInvalidProof);
     }
