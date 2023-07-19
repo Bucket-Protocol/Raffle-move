@@ -7,24 +7,68 @@ module raffle::raffle {
     use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection};
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
-    use sui::object::{Self, UID};
+    use std::string::{Self, String};
+    use std::ascii::String as ASCIIString;
+    use sui::event;
+    use std::type_name;
+    use sui::object::{Self, UID,ID};
     use std::option::{Self};
     // use sui::sui::SUI;
     use sui::transfer;
     
-    use std::string::String;
     
-    use sui::tx_context::{TxContext};
+    use sui::tx_context::{Self, TxContext};
     use std::vector;
-    use std::string::{Self};
     
     use sui::table::{Self, Table};
+
+    struct CoinRaffleCreated has copy, drop {
+        raffle_id: ID,
+        raffle_name: String,
+        creator: address,
+        round: u64,
+        participants_count: u64,
+        winnerCount: u64,
+        prizeAmount: u64,
+        prizeType: ASCIIString,
+    }
+    public fun emit_coin_raffle_created<T>(raffle: &Raffle<T>) {
+        let raffleType = type_name::into_string(type_name::get<T>());
+        let raffleId = *object::borrow_id(raffle);
+        event::emit(CoinRaffleCreated {
+            raffle_id: raffleId,
+            raffle_name: raffle.name,
+            creator: raffle.creator,
+            round: raffle.round,
+            participants_count: vector::length(&raffle.participants),
+            winnerCount: raffle.winnerCount,
+            prizeAmount: balance::value(&raffle.balance),
+            prizeType: raffleType,
+            }
+        );
+    }
+
+    struct CoinRaffleSettled has copy, drop {
+        raffle_id: ID,
+        settler: address,
+    }
+    public fun emit_coin_raffle_settled<T>(raffle: &Raffle<T>) {
+        
+        let raffleId = *object::borrow_id(raffle);
+        event::emit(CoinRaffleSettled {
+            raffle_id: raffleId,
+            settler: raffle.settler,
+            }
+        );
+    }
 
     struct Raffle <phantom T> has key, store {
         id: UID,
         name: String,
         round: u64,
         status: u8,
+        creator: address,
+        settler: address,
         participants: vector<address>,
         winnerCount: u64,
         winners: vector<address>,
@@ -38,17 +82,27 @@ module raffle::raffle {
     fun init(_ctx: &mut TxContext) {
     }
 
-    public entry fun create_raffle<T>(name: vector<u8>, round: u64, participants: vector<address>, winnerCount: u64, awardObject: Coin<T>, ctx: &mut TxContext){
+    public entry fun create_raffle<T>(
+        name: vector<u8>, 
+        round: u64, 
+        participants: vector<address>, 
+        winnerCount: u64,
+        awardObject: Coin<T>, 
+        ctx: &mut TxContext
+    ){
         let raffle: Raffle<T> = Raffle {
             id: object::new(ctx),
             name: string::utf8(name),
             round,
             status: IN_PROGRESS,
+            creator: tx_context::sender(ctx),
+            settler: @0x00,
             participants: participants,
             winnerCount,
             winners: vector::empty(),
             balance: coin::into_balance<T>(awardObject),
         };
+        emit_coin_raffle_created(&raffle);
         transfer::public_share_object(raffle);
     }
 
@@ -56,6 +110,7 @@ module raffle::raffle {
         assert!(raffle.status != COMPLETED, 0);
         verify_drand_signature(drand_sig, drand_prev_sig, raffle.round);
         raffle.status = COMPLETED;
+        raffle.settler = tx_context::sender(ctx);
         // The randomness is derived from drand_sig by passing it through sha2_256 to make it uniform.
         let digest = derive_randomness(drand_sig);
         let random_number = 0;
@@ -82,6 +137,7 @@ module raffle::raffle {
                 break
             }
         };
+        emit_coin_raffle_settled(raffle);
     }
     fun getWinners<T>(raffle: &Raffle<T>):vector<address> {
         raffle.winners
