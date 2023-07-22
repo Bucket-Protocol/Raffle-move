@@ -7,7 +7,10 @@ module raffle::nft_raffle {
     use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection};
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
-    use sui::object::{Self, UID};
+    use sui::object::{Self, UID, ID};
+    use std::ascii::String as ASCIIString;
+    use std::type_name;
+    use sui::event;
     use std::option::{Self};
     // use sui::sui::SU;
     use sui::transfer;
@@ -38,6 +41,32 @@ module raffle::nft_raffle {
     fun init(_ctx: &mut TxContext) {
     }
 
+    struct NftRaffleCreated has copy, drop {
+        raffle_id: ID,
+        raffle_name: String,
+        creator: address,
+        round: u64,
+        participants_count: u64,
+        winnerCount: u64,
+        prizeAmount: u64,
+        prizeType: ASCIIString,
+    }
+    public fun emit_nft_raffle_created<T: store + key>(raffle: &NFT_Raffle<T>) {
+        // let raffleType = type_name::into_string(type_name::get<T>());
+        // let raffleId = object::borrow_id(raffle);
+        // event::emit(CoinRaffleCreated {
+        //     raffle_id: raffleId,
+        //     raffle_name: raffle.name,
+        //     creator: raffle.creator,
+        //     round: raffle.round,
+        //     participants_count: vector::length(&raffle.participants),
+        //     winnerCount: raffle.winnerCount,
+        //     prizeAmount: balance::value(&raffle.balance),
+        //     prizeType: raffleType,
+        //     }
+        // );
+    }
+
     public entry fun create_nft_raffle<T: store + key>(
         name: vector<u8>,
         round: u64,
@@ -45,6 +74,7 @@ module raffle::nft_raffle {
         reward_nfts: vector<T>, 
         ctx: &mut TxContext
     ){
+        
         let winnerCount = vector::length(&reward_nfts);
         let raffle: NFT_Raffle<T> = NFT_Raffle {
             id: object::new(ctx),
@@ -56,6 +86,7 @@ module raffle::nft_raffle {
             winnerCount: winnerCount,
             winners: vector::empty(),
         };
+        emit_nft_raffle_created(&raffle);
         transfer::public_share_object(raffle);
     }
 
