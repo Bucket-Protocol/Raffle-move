@@ -76,7 +76,7 @@ module raffle::raffle {
     fun init(_ctx: &mut TxContext) {
     }
 
-    public entry fun create_raffle<T>(
+    public entry fun create_coin_raffle<T>(
         name: vector<u8>, 
         round: u64, 
         participants: vector<address>, 
