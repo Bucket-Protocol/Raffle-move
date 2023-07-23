@@ -5,8 +5,9 @@
 /// new objects
 module raffle::nft_raffle {
     use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection};
-    use sui::object::{Self, UID};
+    use sui::object::{Self, ID, UID};
     use sui::table_vec::{Self, TableVec};
+    use sui::object_table::{Self, ObjectTable};
     use sui::transfer;
     use std::string::String;
     use sui::tx_context::{TxContext};
@@ -19,7 +20,8 @@ module raffle::nft_raffle {
         round: u64,
         status: u8,
         participants: vector<address>,
-        reward_nfts: TableVec<T>,
+        reward_nfts: ObjectTable<ID, T>,
+        reward_nfts_table_keys: vector<ID>,
         winner_count: u64,
         winners: vector<address>,
     }
@@ -36,10 +38,13 @@ module raffle::nft_raffle {
     ){
         let winner_count = vector::length(&reward_nfts_vec);
         let idx: u64 = 0;
-        let reward_nfts = table_vec::empty(ctx);
+        let reward_nfts = object_table::new(ctx);
+        let reward_nfts_table_keys = vector::empty<ID>();
         while (!vector::is_empty(&reward_nfts_vec)) {
             let nft = vector::pop_back(&mut reward_nfts_vec);
-            table_vec::push_back(&mut reward_nfts, nft);
+            let id = object::id(&nft);
+            object_table::add(&mut reward_nfts, id, nft);
+            vector::push_back(&mut reward_nfts_table_keys, id);
             idx = idx + 1;
         };
         let raffle: NFT_Raffle<T> = NFT_Raffle {
@@ -49,6 +54,7 @@ module raffle::nft_raffle {
             status: IN_PROGRESS,
             participants: participants,
             reward_nfts: reward_nfts,
+            reward_nfts_table_keys: reward_nfts_table_keys,
             winner_count: winner_count,
             winners: vector::empty(),
         };
@@ -78,7 +84,8 @@ module raffle::nft_raffle {
                 &mut raffle.winners, 
                 winner,
             );
-            let nft = table_vec::pop_back(&mut raffle.reward_nfts);
+            let id = vector::pop_back(&mut raffle.reward_nfts_table_keys);
+            let nft = object_table::remove(&mut raffle.reward_nfts, id);
             if (i < raffle.winner_count) {
                 transfer::public_transfer(nft, winner);
             } else {
