@@ -5,47 +5,43 @@
 /// new objects
 module raffle::nft_raffle {
     use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection};
-    use sui::balance::{Self, Balance};
-    use sui::coin::{Self, Coin};
     use sui::object::{Self, UID};
-    use std::option::{Self};
-    // use sui::sui::SU;
+    use sui::table_vec::{Self, TableVec};
     use sui::transfer;
-    
     use std::string::String;
-    
     use sui::tx_context::{TxContext};
     use std::vector;
     use std::string::{Self};
     
-    use sui::table::{Self, Table};
-
-    struct NFT_Raffle <T: store + key> has key, store {
+    struct NFT_Raffle <phantom T: store + key> has key, store {
         id: UID,
         name: String,
         round: u64,
         status: u8,
         participants: vector<address>,
-        reward_nfts: vector<T>,
-        winnerCount: u64,
+        reward_nfts: TableVec<T>,
+        winner_count: u64,
         winners: vector<address>,
     }
     /// Raffle status
     const IN_PROGRESS: u8 = 0;
     const COMPLETED: u8 = 1;
 
-    
-    fun init(_ctx: &mut TxContext) {
-    }
-
     public entry fun create_nft_raffle<T: store + key>(
         name: vector<u8>,
         round: u64,
         participants: vector<address>, 
-        reward_nfts: vector<T>, 
+        reward_nfts_vec: vector<T>, 
         ctx: &mut TxContext
     ){
-        let winnerCount = vector::length(&reward_nfts);
+        let winner_count = vector::length(&reward_nfts_vec);
+        let idx: u64 = 0;
+        let reward_nfts = table_vec::empty(ctx);
+        while (!vector::is_empty(&reward_nfts_vec)) {
+            let nft = vector::pop_back(&mut reward_nfts_vec);
+            table_vec::push_back(&mut reward_nfts, nft);
+            idx = idx + 1;
+        };
         let raffle: NFT_Raffle<T> = NFT_Raffle {
             id: object::new(ctx),
             name: string::utf8(name),
@@ -53,18 +49,18 @@ module raffle::nft_raffle {
             status: IN_PROGRESS,
             participants: participants,
             reward_nfts: reward_nfts,
-            winnerCount: winnerCount,
+            winner_count: winner_count,
             winners: vector::empty(),
         };
         transfer::public_share_object(raffle);
+        vector::destroy_empty(reward_nfts_vec);
     }
 
     public entry fun settle_nft_raffle<T: store + key>(
         raffle: &mut NFT_Raffle<T>, 
         drand_sig: vector<u8>, 
         drand_prev_sig: vector<u8>, 
-        ctx: &mut TxContext
-    ){
+    ) {
         assert!(raffle.status != COMPLETED, 0);
         verify_drand_signature(drand_sig, drand_prev_sig, raffle.round);
         raffle.status = COMPLETED;
@@ -82,12 +78,12 @@ module raffle::nft_raffle {
                 &mut raffle.winners, 
                 winner,
             );
-            let nft = vector::pop_back(&mut raffle.reward_nfts);
-            if (i < raffle.winnerCount) {
+            let nft = table_vec::pop_back(&mut raffle.reward_nfts);
+            if (i < raffle.winner_count) {
                 transfer::public_transfer(nft, winner);
             } else {
                 transfer::public_transfer(nft, winner);
-                break;
+                break
             }
         };
     }
@@ -120,7 +116,7 @@ module raffle::nft_raffle {
     //     };
 
     //     test_scenario::next_tx(scenario, host);
-    //     let winnerCount = 3;
+    //     let winner_count = 3;
     //     let totalPrize = 10;
     //     {
     //         let coin = coin::from_balance(balance::create_for_testing<TEST_COIN>(totalPrize), test_scenario::ctx(scenario));
@@ -133,7 +129,7 @@ module raffle::nft_raffle {
     //         vector::push_back(&mut participants, user6);
     //         vector::push_back(&mut participants, user7);
             
-    //         create_raffle(b"TEST", 3084797, participants, winnerCount, coin, test_scenario::ctx(scenario));
+    //         create_raffle(b"TEST", 3084797, participants, winner_count, coin, test_scenario::ctx(scenario));
             
     //     };
     //     test_scenario::next_tx(scenario, user1);
@@ -147,22 +143,22 @@ module raffle::nft_raffle {
     //         );
     //         let winners = getWinners(&raffle);
     //         debug::print(&winners);
-    //         assert!(winnerCount == vector::length(&winners), 0);
+    //         assert!(winner_count == vector::length(&winners), 0);
             
     //         test_scenario::return_shared(raffle);
     //     };
     //     test_scenario::next_tx(scenario, user1);
     //     {
-    //         assert!(totalPrize / winnerCount == 3, 0);
+    //         assert!(totalPrize / winner_count == 3, 0);
     //         let coin1 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user1);
-    //         assert!(balance::value(coin::balance(&coin1)) == totalPrize / winnerCount, 0);
+    //         assert!(balance::value(coin::balance(&coin1)) == totalPrize / winner_count, 0);
     //         test_scenario::return_to_address(user1, coin1);
     //         let coin2 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user2);
-    //         assert!(balance::value(coin::balance(&coin2)) == totalPrize / winnerCount, 0);
+    //         assert!(balance::value(coin::balance(&coin2)) == totalPrize / winner_count, 0);
     //         debug::print(&balance::value(coin::balance(&coin2)));
     //         test_scenario::return_to_address(user2, coin2);
     //         let coin7 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user7);
-    //         assert!(balance::value(coin::balance(&coin7)) == totalPrize - (totalPrize / winnerCount)*(winnerCount - 1), 0);
+    //         assert!(balance::value(coin::balance(&coin7)) == totalPrize - (totalPrize / winner_count)*(winner_count - 1), 0);
     //         test_scenario::return_to_address(user7, coin7);
     //     };
     //     // {

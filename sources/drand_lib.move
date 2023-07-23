@@ -8,7 +8,6 @@
 ///
 module raffle::drand_lib {
     use std::hash::sha2_256;
-    use std::debug;
     use std::vector;
 
     use sui::bls12381;
@@ -54,7 +53,7 @@ module raffle::drand_lib {
         let digest = sha2_256(prev_sig);
         // Verify the signature on the hash.
         
-        let res = bls12381::bls12381_min_pk_verify(&sig, &DRAND_PK, &digest);
+        bls12381::bls12381_min_pk_verify(&sig, &DRAND_PK, &digest);
         // debug::print(&res);
         
         assert!(bls12381::bls12381_min_pk_verify(&sig, &DRAND_PK, &digest), EInvalidProof);
