@@ -81,6 +81,7 @@ module raffle::nft_raffle {
         ctx: &mut TxContext
     ){
         let winner_count = vector::length(&reward_nfts_vec);
+        assert!(winner_count <= vector::length(&participants), 0);
         let idx: u64 = 0;
         let reward_nfts = object_table::new(ctx);
         let reward_nfts_table_keys = vector::empty<ID>();
