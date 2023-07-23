@@ -12,16 +12,10 @@ module raffle::raffle {
     use sui::event;
     use std::type_name;
     use sui::object::{Self, UID,ID};
-    use std::option::{Self};
-    // use sui::sui::SUI;
     use sui::transfer;
-    
-    
     use sui::tx_context::{Self, TxContext};
     use std::vector;
     
-    use sui::table::{Self, Table};
-
     struct CoinRaffleCreated has copy, drop {
         raffle_id: ID,
         raffle_name: String,
