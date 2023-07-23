@@ -45,6 +45,7 @@ module raffle::nft_raffle {
         participants_count: u64,
         winnerCount: u64,
         prizeType: ASCIIString,
+        reward_nft_ids: vector<ID>,
     }
     public fun emit_nft_raffle_created<T: store + key>(raffle: &NFT_Raffle<T>) {
         let raffleType = type_name::into_string(type_name::get<T>());
@@ -57,6 +58,7 @@ module raffle::nft_raffle {
             participants_count: vector::length(&raffle.participants),
             winnerCount: raffle.winnerCount,
             prizeType: raffleType,
+            reward_nft_ids: raffle.reward_nfts_table_keys,
             }
         );
     }
