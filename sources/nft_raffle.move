@@ -80,8 +80,8 @@ module raffle::nft_raffle {
         reward_nfts_vec: vector<T>, 
         ctx: &mut TxContext
     ){
-        let winner_count = vector::length(&reward_nfts_vec);
-        assert!(winner_count <= vector::length(&participants), 0);
+        let winnerCount = vector::length(&reward_nfts_vec);
+        assert!(winnerCount <= vector::length(&participants), 0);
         let idx: u64 = 0;
         let reward_nfts = object_table::new(ctx);
         let reward_nfts_table_keys = vector::empty<ID>();
@@ -102,7 +102,7 @@ module raffle::nft_raffle {
             participants: participants,
             reward_nfts: reward_nfts,
             reward_nfts_table_keys: reward_nfts_table_keys,
-            winnerCount: winner_count,
+            winnerCount: winnerCount,
             winners: vector::empty(),
         };
         emit_nft_raffle_created(&raffle);
@@ -172,7 +172,7 @@ module raffle::nft_raffle {
     //     };
 
     //     test_scenario::next_tx(scenario, host);
-    //     let winner_count = 3;
+    //     let winnerCount = 3;
     //     let totalPrize = 10;
     //     {
     //         let coin = coin::from_balance(balance::create_for_testing<TEST_COIN>(totalPrize), test_scenario::ctx(scenario));
@@ -185,7 +185,7 @@ module raffle::nft_raffle {
     //         vector::push_back(&mut participants, user6);
     //         vector::push_back(&mut participants, user7);
             
-    //         create_raffle(b"TEST", 3084797, participants, winner_count, coin, test_scenario::ctx(scenario));
+    //         create_raffle(b"TEST", 3084797, participants, winnerCount, coin, test_scenario::ctx(scenario));
             
     //     };
     //     test_scenario::next_tx(scenario, user1);
@@ -199,22 +199,22 @@ module raffle::nft_raffle {
     //         );
     //         let winners = getWinners(&raffle);
     //         debug::print(&winners);
-    //         assert!(winner_count == vector::length(&winners), 0);
+    //         assert!(winnerCount == vector::length(&winners), 0);
             
     //         test_scenario::return_shared(raffle);
     //     };
     //     test_scenario::next_tx(scenario, user1);
     //     {
-    //         assert!(totalPrize / winner_count == 3, 0);
+    //         assert!(totalPrize / winnerCount == 3, 0);
     //         let coin1 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user1);
-    //         assert!(balance::value(coin::balance(&coin1)) == totalPrize / winner_count, 0);
+    //         assert!(balance::value(coin::balance(&coin1)) == totalPrize / winnerCount, 0);
     //         test_scenario::return_to_address(user1, coin1);
     //         let coin2 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user2);
-    //         assert!(balance::value(coin::balance(&coin2)) == totalPrize / winner_count, 0);
+    //         assert!(balance::value(coin::balance(&coin2)) == totalPrize / winnerCount, 0);
     //         debug::print(&balance::value(coin::balance(&coin2)));
     //         test_scenario::return_to_address(user2, coin2);
     //         let coin7 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user7);
-    //         assert!(balance::value(coin::balance(&coin7)) == totalPrize - (totalPrize / winner_count)*(winner_count - 1), 0);
+    //         assert!(balance::value(coin::balance(&coin7)) == totalPrize - (totalPrize / winnerCount)*(winnerCount - 1), 0);
     //         test_scenario::return_to_address(user7, coin7);
     //     };
     //     // {

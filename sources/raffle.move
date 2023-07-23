@@ -84,6 +84,7 @@ module raffle::raffle {
         awardObject: Coin<T>, 
         ctx: &mut TxContext
     ){
+        assert!(winnerCount <= vector::length(&participants), 0);
         let raffle: Raffle<T> = Raffle {
             id: object::new(ctx),
             name: string::utf8(name),
