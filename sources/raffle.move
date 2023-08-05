@@ -171,7 +171,7 @@ module raffle::raffle {
         let user5 = @0xCAF5;
         let user6 = @0xCAF6;
         let user7 = @0xCAF7;
-        let clockObj = @0x6;
+        
         // first transaction to emulate module initialization
         let scenario_val = test_scenario::begin(admin);
         let scenario = &mut scenario_val;
@@ -195,14 +195,16 @@ module raffle::raffle {
             vector::push_back(&mut participants, user6);
             vector::push_back(&mut participants, user7);
             let clockObj = clock::create_for_testing(test_scenario::ctx(scenario));
-            // TODO: 我要找到測試用的 round 的 timestamp，然後寫上去，完成測試
-            clock::set_for_testing(&mut clockObj, 1000);
+            
+            clock::set_for_testing(&mut clockObj, 1687974871000);
             create_coin_raffle(b"TEST", &clockObj, participants, winnerCount, coin, test_scenario::ctx(scenario));
+            clock::destroy_for_testing(clockObj);
             
         };
         test_scenario::next_tx(scenario, user1);
         {
             let raffle = test_scenario::take_shared<Raffle<TEST_COIN>>(scenario);
+            assert!(raffle.round == 3084797, 0);
             
             settle_coin_raffle(
                 &mut raffle, 
@@ -250,7 +252,7 @@ module raffle::raffle {
         //     test_scenario::return_to_sender(scenario, hostCap);
         //     test_scenario::return_shared(userTable);
         // };
-        clock::destroy_for_testing(clock);
+        
         test_scenario::end(scenario_val);
     }
 }
