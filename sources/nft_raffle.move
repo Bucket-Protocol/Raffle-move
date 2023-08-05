@@ -4,7 +4,8 @@
 /// Example of objects that can be combined to create
 /// new objects
 module raffle::nft_raffle {
-    use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection};
+    use sui::clock::{Self, Clock};
+    use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection, get_current_round_by_time};
     use sui::object::{Self, ID, UID};
     use sui::object_table::{Self, ObjectTable};
     use sui::transfer;
@@ -77,11 +78,12 @@ module raffle::nft_raffle {
 
     public entry fun create_nft_raffle<T: store + key>(
         name: vector<u8>,
-        round: u64,
+        clock: &Clock,
         participants: vector<address>, 
         reward_nfts_vec: vector<T>, 
         ctx: &mut TxContext
     ){
+        let drand_current_round = get_current_round_by_time(clock::timestamp_ms(clock));
         let winnerCount = vector::length(&reward_nfts_vec);
         assert!(winnerCount <= vector::length(&participants), 0);
         let idx: u64 = 0;
@@ -97,7 +99,7 @@ module raffle::nft_raffle {
         let raffle: NFT_Raffle<T> = NFT_Raffle {
             id: object::new(ctx),
             name: string::utf8(name),
-            round,
+            round: drand_current_round + 2,
             status: IN_PROGRESS,
             creator: tx_context::sender(ctx),
             settler: @0x00,

@@ -4,7 +4,8 @@
 /// Example of objects that can be combined to create
 /// new objects
 module raffle::raffle {
-    use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection};
+    use sui::clock::{Self, Clock};
+    use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection, get_current_round_by_time};
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
     use std::string::{Self, String};
@@ -15,6 +16,22 @@ module raffle::raffle {
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
     use std::vector;
+
+    struct TimeEvent has copy, drop, store { 
+        timestamp_ms: u64,
+        expect_current_round: u64,
+        round_will_use: u64,
+    }
+
+    entry fun get_drandlib_round(clock: &Clock) {
+        let expect_current_round = get_current_round_by_time(clock::timestamp_ms(clock));
+        let round_will_use = expect_current_round + 2;
+        event::emit(TimeEvent {
+            timestamp_ms: clock::timestamp_ms(clock),
+            expect_current_round: expect_current_round,
+            round_will_use: round_will_use,
+        });
+    }
     
     struct CoinRaffleCreated has copy, drop {
         raffle_id: ID,
@@ -47,7 +64,6 @@ module raffle::raffle {
         settler: address,
     }
     public fun emit_coin_raffle_settled<T>(raffle: &Raffle<T>) {
-        
         let raffleId = *object::borrow_id(raffle);
         event::emit(CoinRaffleSettled {
             raffle_id: raffleId,
@@ -78,17 +94,18 @@ module raffle::raffle {
 
     public entry fun create_coin_raffle<T>(
         name: vector<u8>, 
-        round: u64, 
+        clock: &Clock,
         participants: vector<address>, 
         winnerCount: u64,
         awardObject: Coin<T>, 
         ctx: &mut TxContext
     ){
         assert!(winnerCount <= vector::length(&participants), 0);
+        let drand_current_round = get_current_round_by_time(clock::timestamp_ms(clock));
         let raffle: Raffle<T> = Raffle {
             id: object::new(ctx),
             name: string::utf8(name),
-            round,
+            round: drand_current_round + 2,
             status: IN_PROGRESS,
             creator: tx_context::sender(ctx),
             settler: @0x00,
@@ -154,6 +171,7 @@ module raffle::raffle {
         let user5 = @0xCAF5;
         let user6 = @0xCAF6;
         let user7 = @0xCAF7;
+        let clockObj = @0x6;
         // first transaction to emulate module initialization
         let scenario_val = test_scenario::begin(admin);
         let scenario = &mut scenario_val;
@@ -165,6 +183,7 @@ module raffle::raffle {
         test_scenario::next_tx(scenario, host);
         let winnerCount = 3;
         let totalPrize = 10;
+        
         {
             let coin = coin::from_balance(balance::create_for_testing<TEST_COIN>(totalPrize), test_scenario::ctx(scenario));
             let participants = vector::empty<address>();
@@ -175,13 +194,16 @@ module raffle::raffle {
             vector::push_back(&mut participants, user5);
             vector::push_back(&mut participants, user6);
             vector::push_back(&mut participants, user7);
-            
-            create_raffle(b"TEST", 3084797, participants, winnerCount, coin, test_scenario::ctx(scenario));
+            let clockObj = clock::create_for_testing(test_scenario::ctx(scenario));
+            // TODO: 我要找到測試用的 round 的 timestamp，然後寫上去，完成測試
+            clock::set_for_testing(&mut clockObj, 1000);
+            create_coin_raffle(b"TEST", &clockObj, participants, winnerCount, coin, test_scenario::ctx(scenario));
             
         };
         test_scenario::next_tx(scenario, user1);
         {
             let raffle = test_scenario::take_shared<Raffle<TEST_COIN>>(scenario);
+            
             settle_coin_raffle(
                 &mut raffle, 
                 x"9443823f383e66ab072215da88087c31b129c350f9eebb0651f62da462e19b38d4a35c2f65d825304868d756ed81585016b9e847cf5c51a325e0d02519106ce1999c9292aa8b726609d792a00808dc9e9810ae76e9622e44934d14be32ef9c62",
@@ -228,6 +250,7 @@ module raffle::raffle {
         //     test_scenario::return_to_sender(scenario, hostCap);
         //     test_scenario::return_shared(userTable);
         // };
+        clock::destroy_for_testing(clock);
         test_scenario::end(scenario_val);
     }
 }
