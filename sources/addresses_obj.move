@@ -44,13 +44,11 @@ module raffle::addresses_obj {
         vector::append(&mut addressesObj.addresses, participants);
     }
     public entry fun finalize(
-        addressesObj: AddressesObj,
+        addressesObj: &mut AddressesObj,
         fee: u64,
-        receiver: address,
         ctx: &mut TxContext
     ){
         addressesObj.fee = fee;
-        transfer::transfer(addressesObj, receiver);
     }
     public fun getParticipants(
         addressesObj: &AddressesObj,

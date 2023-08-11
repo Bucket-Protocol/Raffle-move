@@ -325,7 +325,9 @@ module raffle::raffle {
         test_scenario::next_tx(scenario, admin);
         {
             let addressesObj = test_scenario::take_from_address<AddressesObj>(scenario, admin);
-            addresses_obj::finalize(addressesObj, 50000, host, test_scenario::ctx(scenario));
+            addresses_obj::finalize(&mut addressesObj, 50000, test_scenario::ctx(scenario));
+            transfer::public_transfer(addressesObj, host);
+            
         };
         
 
