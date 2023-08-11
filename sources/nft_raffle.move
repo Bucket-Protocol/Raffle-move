@@ -16,6 +16,7 @@ module raffle::nft_raffle {
     use sui::tx_context::{Self, TxContext};
     use std::vector;
     use std::string::{Self};
+    use raffle::addresses_obj::{Self, AddressesObj};
     
     struct NFT_Raffle <phantom T: store + key> has key, store {
         id: UID,
@@ -76,6 +77,16 @@ module raffle::nft_raffle {
         );
     }
 
+public entry fun create_nft_raffle_by_addresses_obj<T: store + key>(
+        name: vector<u8>,
+        clock: &Clock,
+        addressesObj: &mut AddressesObj,
+        reward_nfts_vec: vector<T>, 
+        ctx: &mut TxContext
+    ){
+        let participants = addresses_obj::update_adresses_and_return_old(addressesObj, vector::empty());
+        create_nft_raffle(name, clock, participants, reward_nfts_vec, ctx);
+    }
     public entry fun create_nft_raffle<T: store + key>(
         name: vector<u8>,
         clock: &Clock,
