@@ -146,10 +146,16 @@ public entry fun create_nft_raffle_by_addresses_obj<T: store + key, F: drop>(
 
     public entry fun settle_nft_raffle<T: store + key>(
         raffle: &mut NFT_Raffle<T>, 
+        clock: &Clock,
         drand_sig: vector<u8>, 
         drand_prev_sig: vector<u8>, 
+        ctx: &mut TxContext,
     ) {
         assert!(raffle.status != COMPLETED, 0);
+        if(raffle.creator != tx_context::sender(ctx)){
+            let currend_round = get_current_round_by_time(clock::timestamp_ms(clock));
+            assert!(currend_round >= raffle.round + 10, 0);
+        };
         verify_drand_signature(drand_sig, drand_prev_sig, raffle.round);
         raffle.status = COMPLETED;
         // The randomness is derived from drand_sig by passing it through sha2_256 to make it uniform.

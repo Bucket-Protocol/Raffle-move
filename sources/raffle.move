@@ -147,8 +147,18 @@ module raffle::raffle {
         create_coin_raffle(name, clock, participants, winnerCount, awardObject, ctx);
     }
 
-    public entry fun settle_coin_raffle<T>(raffle: &mut Raffle<T>, drand_sig: vector<u8>, drand_prev_sig: vector<u8>, ctx: &mut TxContext){
+    public entry fun settle_coin_raffle<T>(
+        raffle: &mut Raffle<T>,
+        clock: &Clock,
+        drand_sig: vector<u8>,
+        drand_prev_sig: vector<u8>,
+        ctx: &mut TxContext
+    ){
         assert!(raffle.status != COMPLETED, 0);
+        if(raffle.creator != tx_context::sender(ctx)){
+            let currend_round = get_current_round_by_time(clock::timestamp_ms(clock));
+            assert!(currend_round >= raffle.round + 10, 0);
+        };
         verify_drand_signature(drand_sig, drand_prev_sig, raffle.round);
         raffle.status = COMPLETED;
         raffle.settler = tx_context::sender(ctx);
@@ -237,13 +247,17 @@ module raffle::raffle {
         {
             let raffle = test_scenario::take_shared<Raffle<TEST_COIN>>(scenario);
             assert!(raffle.round == 3084797, 0);
+            let clockObj = clock::create_for_testing(test_scenario::ctx(scenario));
+            clock::set_for_testing(&mut clockObj, 1687975971000);
             
             settle_coin_raffle(
                 &mut raffle, 
+                &clockObj,
                 x"9443823f383e66ab072215da88087c31b129c350f9eebb0651f62da462e19b38d4a35c2f65d825304868d756ed81585016b9e847cf5c51a325e0d02519106ce1999c9292aa8b726609d792a00808dc9e9810ae76e9622e44934d14be32ef9c62",
                 x"89aa680c3cde91517dffd9f81bbb5c78baa1c3b4d76b1bfced88e7d8449ff0dc55515e09364db01d05d62bde03a7d08111f95131a7fef2a27e1c8aea8e499189214d38d27deabaf67b35821949fff73b13f0f182588fe1dc73630742bb95ba29", 
                 test_scenario::ctx(scenario)
             );
+            clock::destroy_for_testing(clockObj);
             let winners = getWinners(&raffle);
             // debug::print(&winners);
             assert!(winnerCount == vector::length(&winners), 0);
@@ -322,7 +336,7 @@ module raffle::raffle {
             vector::push_back(&mut participants, user5);
             vector::push_back(&mut participants, user6);
             vector::push_back(&mut participants, user7);
-            addresses_obj::create_addresses_obj<TEST_COIN>(participants, test_scenario::ctx(scenario));
+            addresses_obj::create<TEST_COIN>(participants, test_scenario::ctx(scenario));
         };
         
         let i = 0;
@@ -368,16 +382,25 @@ module raffle::raffle {
         };
         test_scenario::next_tx(scenario, user1);
         {
+            let feeCoin = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, admin);
+            assert!(balance::value(coin::balance(&feeCoin)) == fee, 0);
+            test_scenario::return_to_address(admin, feeCoin);
+
             let raffle = test_scenario::take_shared<Raffle<TEST_COIN>>(scenario);
             // debug::print(&raffle.participants);
+
             assert!(raffle.round == 3084797, 0);
+            let clockObj = clock::create_for_testing(test_scenario::ctx(scenario));
+            clock::set_for_testing(&mut clockObj, 1687975971000);
             
             settle_coin_raffle(
                 &mut raffle, 
+                &clockObj,
                 x"9443823f383e66ab072215da88087c31b129c350f9eebb0651f62da462e19b38d4a35c2f65d825304868d756ed81585016b9e847cf5c51a325e0d02519106ce1999c9292aa8b726609d792a00808dc9e9810ae76e9622e44934d14be32ef9c62",
                 x"89aa680c3cde91517dffd9f81bbb5c78baa1c3b4d76b1bfced88e7d8449ff0dc55515e09364db01d05d62bde03a7d08111f95131a7fef2a27e1c8aea8e499189214d38d27deabaf67b35821949fff73b13f0f182588fe1dc73630742bb95ba29", 
                 test_scenario::ctx(scenario)
             );
+            clock::destroy_for_testing(clockObj);
             let winners = getWinners(&raffle);
             // debug::print(&winners);
             assert!(winnerCount == vector::length(&winners), 0);

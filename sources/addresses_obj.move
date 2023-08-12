@@ -24,7 +24,7 @@ module raffle::addresses_obj {
         fee: u64,
     }
 
-    public entry fun create_addresses_obj<T>(
+    public entry fun create<T>(
         participants: vector<address>, 
         ctx: &mut TxContext
     ){
@@ -38,10 +38,10 @@ module raffle::addresses_obj {
     }
     public entry fun add_addresses<T>(
         addressesObj: &mut AddressesObj<T>,
-        participants: vector<address>, 
+        addresses: vector<address>, 
         ctx: &mut TxContext
     ){
-        vector::append(&mut addressesObj.addresses, participants);
+        vector::append(&mut addressesObj.addresses, addresses);
     }
     public entry fun finalize<T>(
         addressesObj: &mut AddressesObj<T>,
