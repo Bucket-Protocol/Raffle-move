@@ -6,6 +6,8 @@
 module raffle::nft_raffle {
     use sui::clock::{Self, Clock};
     use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection, get_current_round_by_time};
+    use sui::balance::{Self, Balance};
+    use sui::coin::{Self, Coin};
     use sui::object::{Self, ID, UID};
     use sui::object_table::{Self, ObjectTable};
     use sui::transfer;
@@ -90,13 +92,17 @@ module raffle::nft_raffle {
         );
     }
 
-public entry fun create_nft_raffle_by_addresses_obj<T: store + key, F: key + store>(
+public entry fun create_nft_raffle_by_addresses_obj<T: store + key, F: drop>(
         name: vector<u8>,
         clock: &Clock,
         addressesObj: &mut AddressesObj<F>,
+        fee: Coin<F>,
         reward_nfts_vec: vector<T>, 
         ctx: &mut TxContext
     ){
+        assert!(addresses_obj::getFee(addressesObj) == balance::value(coin::balance(&fee)), 0);
+        transfer::public_transfer(fee, addresses_obj::getCreator(addressesObj));
+        
         let participants = addresses_obj::update_adresses_and_return_old(addressesObj, vector::empty());
         create_nft_raffle(name, clock, participants, reward_nfts_vec, ctx);
     }

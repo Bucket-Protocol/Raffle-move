@@ -17,14 +17,14 @@ module raffle::addresses_obj {
     use sui::tx_context::{Self, TxContext};
     use std::vector;
 
-    struct AddressesObj<phantom T: key + store> has key, store {
+    struct AddressesObj<phantom T> has key, store {
         id: UID,
         addresses: vector<address>,
         creator: address,
         fee: u64,
     }
 
-    public entry fun create_addresses_obj<T: key + store>(
+    public entry fun create_addresses_obj<T>(
         participants: vector<address>, 
         ctx: &mut TxContext
     ){
@@ -36,43 +36,43 @@ module raffle::addresses_obj {
         };
         transfer::transfer(addressesObj, tx_context::sender(ctx));
     }
-    public entry fun add_addresses<T: key + store>(
+    public entry fun add_addresses<T>(
         addressesObj: &mut AddressesObj<T>,
         participants: vector<address>, 
         ctx: &mut TxContext
     ){
         vector::append(&mut addressesObj.addresses, participants);
     }
-    public entry fun finalize<T: key + store>(
+    public entry fun finalize<T>(
         addressesObj: &mut AddressesObj<T>,
         fee: u64,
         ctx: &mut TxContext
     ){
         addressesObj.fee = fee;
     }
-    public entry fun clear<T: key + store>(
+    public entry fun clear<T>(
         addressesObj: &mut AddressesObj<T>,
         ctx: &mut TxContext
     ){
         assert!(addressesObj.creator == tx_context::sender(ctx),1);
         addressesObj.addresses = vector::empty();
     }
-    public fun getParticipants<T: key + store>(
+    public fun getParticipants<T>(
         addressesObj: &AddressesObj<T>,
     ): vector<address> {
         return addressesObj.addresses
     }
-    public fun getCreator<T: key + store>(
+    public fun getCreator<T>(
         addressesObj: &AddressesObj<T>,
     ): address {
         return addressesObj.creator
     }
-    public fun getFee<T: key + store>(
+    public fun getFee<T>(
         addressesObj: &AddressesObj<T>,
     ): u64 {
         return addressesObj.fee
     }
-    public fun update_adresses_and_return_old<T: key + store>(
+    public fun update_adresses_and_return_old<T>(
         addressesObj: &mut AddressesObj<T>,
         new_addresses: vector<address>, 
     ): vector<address>{
