@@ -50,6 +50,13 @@ module raffle::addresses_obj {
     ){
         addressesObj.fee = fee;
     }
+    public entry fun clear(
+        addressesObj: &mut AddressesObj,
+        ctx: &mut TxContext
+    ){
+        assert!(addressesObj.creator == tx_context::sender(ctx),1);
+        addressesObj.addresses = vector::empty();
+    }
     public fun getParticipants(
         addressesObj: &AddressesObj,
     ): vector<address> {

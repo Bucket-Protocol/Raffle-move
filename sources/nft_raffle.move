@@ -45,6 +45,7 @@ module raffle::nft_raffle {
         creator: address,
         round: u64,
         participants_count: u64,
+        participants: vector<address>,
         winnerCount: u64,
         prizeType: ASCIIString,
         reward_nft_ids: vector<ID>,
@@ -52,12 +53,24 @@ module raffle::nft_raffle {
     public fun emit_nft_raffle_created<T: store + key>(raffle: &NFT_Raffle<T>) {
         let raffleType = type_name::into_string(type_name::get<T>());
         let raffleId = *object::borrow_id(raffle);
+        let participants_in_event = vector::empty<address>();
+        let i = 0;
+        let length = vector::length(&raffle.participants);
+        loop{
+            let participant = vector::borrow(&raffle.participants, i);
+            vector::push_back(&mut participants_in_event, *participant);
+            i = i+1;
+            if (i == length) {
+                break
+            }
+        };
         event::emit(NftRaffleCreated {
             raffle_id: raffleId,
             raffle_name: raffle.name,
             creator: raffle.creator,
             round: raffle.round,
             participants_count: vector::length(&raffle.participants),
+            participants: participants_in_event,
             winnerCount: raffle.winnerCount,
             prizeType: raffleType,
             reward_nft_ids: raffle.reward_nfts_table_keys,
@@ -156,6 +169,7 @@ public entry fun create_nft_raffle_by_addresses_obj<T: store + key>(
                 break
             }
         };
+        raffle.participants = vector::empty();
         emit_nft_raffle_settled(raffle);
     }
     fun getWinners<T: key+store>(raffle: &NFT_Raffle<T>):vector<address> {

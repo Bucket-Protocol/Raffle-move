@@ -40,6 +40,7 @@ module raffle::raffle {
         creator: address,
         round: u64,
         participants_count: u64,
+        participants: vector<address>,
         winnerCount: u64,
         prizeAmount: u64,
         prizeType: ASCIIString,
@@ -47,12 +48,24 @@ module raffle::raffle {
     public fun emit_coin_raffle_created<T>(raffle: &Raffle<T>) {
         let raffleType = type_name::into_string(type_name::get<T>());
         let raffleId = *object::borrow_id(raffle);
+        let participants_in_event = vector::empty<address>();
+        let i = 0;
+        let length = vector::length(&raffle.participants);
+        loop{
+            let participant = vector::borrow(&raffle.participants, i);
+            vector::push_back(&mut participants_in_event, *participant);
+            i = i+1;
+            if (i == length) {
+                break
+            }
+        };
         event::emit(CoinRaffleCreated {
             raffle_id: raffleId,
             raffle_name: raffle.name,
             creator: raffle.creator,
             round: raffle.round,
             participants_count: vector::length(&raffle.participants),
+            participants: participants_in_event,
             winnerCount: raffle.winnerCount,
             prizeAmount: balance::value(&raffle.balance),
             prizeType: raffleType,
@@ -161,8 +174,11 @@ module raffle::raffle {
                 break
             }
         };
+        raffle.participants = vector::empty();
         emit_coin_raffle_settled(raffle);
     }
+
+    // public entry fun release_raffle_participants
     fun getWinners<T>(raffle: &Raffle<T>):vector<address> {
         raffle.winners
     }
