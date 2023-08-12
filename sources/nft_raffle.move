@@ -90,10 +90,10 @@ module raffle::nft_raffle {
         );
     }
 
-public entry fun create_nft_raffle_by_addresses_obj<T: store + key>(
+public entry fun create_nft_raffle_by_addresses_obj<T: store + key, F: key + store>(
         name: vector<u8>,
         clock: &Clock,
-        addressesObj: &mut AddressesObj,
+        addressesObj: &mut AddressesObj<F>,
         reward_nfts_vec: vector<T>, 
         ctx: &mut TxContext
     ){

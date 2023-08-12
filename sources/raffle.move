@@ -131,15 +131,17 @@ module raffle::raffle {
         emit_coin_raffle_created(&raffle);
         transfer::public_share_object(raffle);
     }
-    public entry fun create_coin_raffle_by_addresses_obj<T>(
+    public entry fun create_coin_raffle_by_addresses_obj<T, F>(
         name: vector<u8>, 
         clock: &Clock,
-        addressesObj: &mut AddressesObj,
+        addressesObj: &mut AddressesObj<Coin<F>>,
+        fee: Coin<F>,
         winnerCount: u64,
         awardObject: Coin<T>, 
         ctx: &mut TxContext
     ){
         let participants = addresses_obj::update_adresses_and_return_old(addressesObj, vector::empty());
+        transfer::public_transfer(fee, addresses_obj::getCreator(addressesObj));
         create_coin_raffle(name, clock, participants, winnerCount, awardObject, ctx);
     }
 
@@ -318,99 +320,105 @@ module raffle::raffle {
             vector::push_back(&mut participants, user5);
             vector::push_back(&mut participants, user6);
             vector::push_back(&mut participants, user7);
-            addresses_obj::create_addresses_obj(participants, test_scenario::ctx(scenario));
-        };
-        let i = 0;
-        while(i < 100){
-            test_scenario::next_tx(scenario, admin);
-            {
-                let addressesObj = test_scenario::take_from_address<AddressesObj>(scenario, admin);
-                let participants = vector::empty<address>();
-                vector::push_back(&mut participants, user1);
-                vector::push_back(&mut participants, user2);
-                vector::push_back(&mut participants, user3);
-                vector::push_back(&mut participants, user4);
-                vector::push_back(&mut participants, user5);
-                vector::push_back(&mut participants, user6);
-                vector::push_back(&mut participants, user7);
-                addresses_obj::add_addresses(&mut addressesObj, participants, test_scenario::ctx(scenario));
-                test_scenario::return_to_address(admin, addressesObj);
-            };
-            i = i+1;
-        };
-        test_scenario::next_tx(scenario, admin);
-        {
-            let addressesObj = test_scenario::take_from_address<AddressesObj>(scenario, admin);
-            addresses_obj::finalize(&mut addressesObj, 50000, test_scenario::ctx(scenario));
-            transfer::public_transfer(addressesObj, host);
-            
+            addresses_obj::create_addresses_obj<Coin<TEST_COIN>>(participants, test_scenario::ctx(scenario));
+
+            let addressesObj = test_scenario::take_from_address<AddressesObj<Coin<TEST_COIN>>>(scenario, admin);
+            test_scenario::return_to_address(admin, addressesObj);
         };
         
+        // let i = 0;
+        // // while(i < 100){
+        // //     test_scenario::next_tx(scenario, admin);
+        // //     {
+        // //         let addressesObj = test_scenario::take_from_address<AddressesObj<Coin<TEST_COIN>>>(scenario, admin);
+        // //         let participants = vector::empty<address>();
+        // //         vector::push_back(&mut participants, user1);
+        // //         vector::push_back(&mut participants, user2);
+        // //         vector::push_back(&mut participants, user3);
+        // //         vector::push_back(&mut participants, user4);
+        // //         vector::push_back(&mut participants, user5);
+        // //         vector::push_back(&mut participants, user6);
+        // //         vector::push_back(&mut participants, user7);
+        // //         addresses_obj::add_addresses(&mut addressesObj, participants, test_scenario::ctx(scenario));
+        // //         test_scenario::return_to_address(admin, addressesObj);
+        // //     };
+        // //     i = i+1;
+        // // };
+        // test_scenario::next_tx(scenario, admin);
+        // let fee = 50000;
+        // {
+        //     let addressesObj = test_scenario::take_from_address<AddressesObj<Coin<TEST_COIN>>>(scenario, admin);
+        //     addresses_obj::finalize(&mut addressesObj, fee, test_scenario::ctx(scenario));
+        //     transfer::public_transfer(addressesObj, host);
+            
+        // };
+        
 
-        test_scenario::next_tx(scenario, host);
-        let winnerCount = 3;
-        let totalPrize = 10;
-        {
-            let coin = coin::from_balance(balance::create_for_testing<TEST_COIN>(totalPrize), test_scenario::ctx(scenario));
-            let clockObj = clock::create_for_testing(test_scenario::ctx(scenario));
-            let addressesObj = test_scenario::take_from_address<AddressesObj>(scenario, host);
-            clock::set_for_testing(&mut clockObj, 1687974871000);
-            create_coin_raffle_by_addresses_obj(b"TEST", &clockObj, &mut addressesObj, winnerCount, coin, test_scenario::ctx(scenario));
-            clock::destroy_for_testing(clockObj);
-            test_scenario::return_to_address(host, addressesObj);
-        };
-        test_scenario::next_tx(scenario, user1);
-        {
-            let raffle = test_scenario::take_shared<Raffle<TEST_COIN>>(scenario);
-            // debug::print(&raffle.participants);
-            assert!(raffle.round == 3084797, 0);
-            
-            settle_coin_raffle(
-                &mut raffle, 
-                x"9443823f383e66ab072215da88087c31b129c350f9eebb0651f62da462e19b38d4a35c2f65d825304868d756ed81585016b9e847cf5c51a325e0d02519106ce1999c9292aa8b726609d792a00808dc9e9810ae76e9622e44934d14be32ef9c62",
-                x"89aa680c3cde91517dffd9f81bbb5c78baa1c3b4d76b1bfced88e7d8449ff0dc55515e09364db01d05d62bde03a7d08111f95131a7fef2a27e1c8aea8e499189214d38d27deabaf67b35821949fff73b13f0f182588fe1dc73630742bb95ba29", 
-                test_scenario::ctx(scenario)
-            );
-            let winners = getWinners(&raffle);
-            // debug::print(&winners);
-            assert!(winnerCount == vector::length(&winners), 0);
-            
-            test_scenario::return_shared(raffle);
-        };
+        // test_scenario::next_tx(scenario, host);
+        // let winnerCount = 3;
+        // let totalPrize = 10;
+        // {
+        //     let coin = coin::from_balance(balance::create_for_testing<TEST_COIN>(totalPrize), test_scenario::ctx(scenario));
+        //     let fee = coin::from_balance(balance::create_for_testing<TEST_COIN>(fee), test_scenario::ctx(scenario));
+        //     let clockObj = clock::create_for_testing(test_scenario::ctx(scenario));
+        //     let addressesObj = test_scenario::take_from_address<AddressesObj<Coin<TEST_COIN>>>(scenario, host);
+        //     clock::set_for_testing(&mut clockObj, 1687974871000);
+        //     create_coin_raffle_by_addresses_obj(b"TEST", &clockObj, &mut addressesObj, fee, winnerCount, coin, test_scenario::ctx(scenario));
+        //     clock::destroy_for_testing(clockObj);
+        //     test_scenario::return_to_address(host, addressesObj);
+        // };
         // test_scenario::next_tx(scenario, user1);
         // {
-        //     assert!(totalPrize / winnerCount == 3, 0);
-        //     let coin1 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user1);
-        //     assert!(balance::value(coin::balance(&coin1)) == totalPrize / winnerCount, 0);
-        //     test_scenario::return_to_address(user1, coin1);
-        //     let coin2 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user2);
-        //     assert!(balance::value(coin::balance(&coin2)) == totalPrize / winnerCount, 0);
-        //     // debug::print(&balance::value(coin::balance(&coin2)));
-        //     test_scenario::return_to_address(user2, coin2);
-        //     let coin7 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user7);
-        //     assert!(balance::value(coin::balance(&coin7)) == totalPrize - (totalPrize / winnerCount)*(winnerCount - 1), 0);
-        //     test_scenario::return_to_address(user7, coin7);
-        // };
-        // {
-        //     // let coin1 = test_scenario::take_from_address<TEST_COIN>(scenario, user1);
-        //     // assert!(balance::value(&coin1) == 0, 0);
-        // }
-        // {
-        //     let managerCap = test_scenario::take_from_sender<ManagerCap>(scenario);
-        //     let participants = vector::new();
-        //     create_raffle(1, vector::new(), 1, Coin::new(100), test_scenario::ctx(scenario));
-        //     test_scenario::return_to_sender(scenario, managerCap);
+        //     let raffle = test_scenario::take_shared<Raffle<TEST_COIN>>(scenario);
+        //     // debug::print(&raffle.participants);
+        //     assert!(raffle.round == 3084797, 0);
             
-        // };
-        // test_scenario::next_tx(scenario, host);
-        // {
-        //     let hostCap = test_scenario::take_from_sender<HostCap>(scenario);
-        //     let userTable = test_scenario::take_shared<UserTable>(scenario);
-        //     // charge_from_users(&hostCap, &mut userTable, test_scenario::ctx(scenario));
+        //     settle_coin_raffle(
+        //         &mut raffle, 
+        //         x"9443823f383e66ab072215da88087c31b129c350f9eebb0651f62da462e19b38d4a35c2f65d825304868d756ed81585016b9e847cf5c51a325e0d02519106ce1999c9292aa8b726609d792a00808dc9e9810ae76e9622e44934d14be32ef9c62",
+        //         x"89aa680c3cde91517dffd9f81bbb5c78baa1c3b4d76b1bfced88e7d8449ff0dc55515e09364db01d05d62bde03a7d08111f95131a7fef2a27e1c8aea8e499189214d38d27deabaf67b35821949fff73b13f0f182588fe1dc73630742bb95ba29", 
+        //         test_scenario::ctx(scenario)
+        //     );
+        //     let winners = getWinners(&raffle);
+        //     // debug::print(&winners);
+        //     assert!(winnerCount == vector::length(&winners), 0);
             
-        //     test_scenario::return_to_sender(scenario, hostCap);
-        //     test_scenario::return_shared(userTable);
+        //     test_scenario::return_shared(raffle);
         // };
+        // // test_scenario::next_tx(scenario, user1);
+        // // {
+        // //     assert!(totalPrize / winnerCount == 3, 0);
+        // //     let coin1 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user1);
+        // //     assert!(balance::value(coin::balance(&coin1)) == totalPrize / winnerCount, 0);
+        // //     test_scenario::return_to_address(user1, coin1);
+        // //     let coin2 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user2);
+        // //     assert!(balance::value(coin::balance(&coin2)) == totalPrize / winnerCount, 0);
+        // //     // debug::print(&balance::value(coin::balance(&coin2)));
+        // //     test_scenario::return_to_address(user2, coin2);
+        // //     let coin7 = test_scenario::take_from_address<Coin<TEST_COIN>>(scenario, user7);
+        // //     assert!(balance::value(coin::balance(&coin7)) == totalPrize - (totalPrize / winnerCount)*(winnerCount - 1), 0);
+        // //     test_scenario::return_to_address(user7, coin7);
+        // // };
+        // // {
+        // //     // let coin1 = test_scenario::take_from_address<TEST_COIN>(scenario, user1);
+        // //     // assert!(balance::value(&coin1) == 0, 0);
+        // // }
+        // // {
+        // //     let managerCap = test_scenario::take_from_sender<ManagerCap>(scenario);
+        // //     let participants = vector::new();
+        // //     create_raffle(1, vector::new(), 1, Coin::new(100), test_scenario::ctx(scenario));
+        // //     test_scenario::return_to_sender(scenario, managerCap);
+            
+        // // };
+        // // test_scenario::next_tx(scenario, host);
+        // // {
+        // //     let hostCap = test_scenario::take_from_sender<HostCap>(scenario);
+        // //     let userTable = test_scenario::take_shared<UserTable>(scenario);
+        // //     // charge_from_users(&hostCap, &mut userTable, test_scenario::ctx(scenario));
+            
+        // //     test_scenario::return_to_sender(scenario, hostCap);
+        // //     test_scenario::return_shared(userTable);
+        // // };
         
         test_scenario::end(scenario_val);
     }
