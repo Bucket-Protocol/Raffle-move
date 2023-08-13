@@ -142,9 +142,9 @@ module raffle::raffle {
     ){
         assert!(addresses_obj::getFee(addressesObj) == balance::value(coin::balance(&fee)), 0);
         transfer::public_transfer(fee, addresses_obj::getCreator(addressesObj));
-        
-        let participants = addresses_obj::update_adresses_and_return_old(addressesObj, vector::empty());
+        let participants = addresses_obj::getAddresses(addressesObj);
         create_coin_raffle(name, clock, participants, winnerCount, awardObject, ctx);
+        addresses_obj::clear(addressesObj);
     }
 
     public entry fun settle_coin_raffle<T>(
