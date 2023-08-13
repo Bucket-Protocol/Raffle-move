@@ -35,13 +35,10 @@ module raffle::addresses_obj {
         addresses: vector<address>,
         ctx: &mut TxContext
     ): AddressesObj<T> {
-        let addressesSubObjs_table = object_table::new<ID, AddressesSubObj>(ctx);
-        let addressesSubObjs_keys = vector::empty<ID>();
-        
-        let addressesSubObj = addresses_sub_obj::create(addresses, ctx);
-        let id = object::id(&addressesSubObj);
-        object_table::add(&mut addressesSubObjs_table, id, addressesSubObj);
-        vector::push_back(&mut addressesSubObjs_keys, id);
+        let (
+            addressesSubObjs_table,
+            addressesSubObjs_keys
+        ) = addresses_sub_obj::table_keys_create(addresses, ctx);
         
         // object_table::add(&mut reward_nfts, id, nft);
         let addressesObj = AddressesObj<T> {
@@ -85,7 +82,49 @@ module raffle::addresses_obj {
         fee: u64,
         ctx: &mut TxContext
     ){
+        assert!(addressesObj.creator == tx_context::sender(ctx),1);
+        setFee(addressesObj, fee);
+    }
+
+    public (friend) fun setFee<T>(
+        addressesObj: &mut AddressesObj<T>,
+        fee: u64,
+    ){
         addressesObj.fee = fee;
+    }
+
+    public entry fun destroy<T>(
+        addressesObj: AddressesObj<T>,
+    ){
+        assert!(addressesObj.fee == 0, 0);
+        let AddressesObj<T> {
+            id,
+            addressesSubObjs_table,
+            addressesSubObjs_keys,
+            creator,
+            fee
+        } = addressesObj;
+        object::delete(id);
+        addresses_sub_obj::table_keys_clear(&mut addressesSubObjs_table, &mut addressesSubObjs_keys);
+        object_table::destroy_empty(addressesSubObjs_table);
+        vector::destroy_empty(addressesSubObjs_keys);
+    }
+
+    public (friend) fun pop_all<T>(
+        addressesObj: &mut AddressesObj<T>,
+        ctx: &mut TxContext
+    ): (ObjectTable<ID, AddressesSubObj>, vector<ID>) {
+        let out_table = object_table::new<ID, AddressesSubObj>(ctx);
+        let index = 0;
+        while (index < vector::length(&addressesObj.addressesSubObjs_keys)) {
+            let id = vector::borrow(&addressesObj.addressesSubObjs_keys, index);
+            let addressesSubObj = object_table::remove(&mut addressesObj.addressesSubObjs_table, *id);
+            object_table::add(&mut out_table, *id, addressesSubObj);
+            index = index + 1;
+        };
+        let out_keys = addressesObj.addressesSubObjs_keys;
+        addressesObj.addressesSubObjs_keys = vector::empty();
+        return (out_table, out_keys)
     }
     public (friend) fun clear<T>(
         addressesObj: &mut AddressesObj<T>,
@@ -111,21 +150,10 @@ module raffle::addresses_obj {
     public fun getAddresses<T>(
         addressesObj: &AddressesObj<T>,
     ): vector<address> {
-        let index = 0;
-        let all_addresses = vector::empty<address>();
-        while (index < vector::length(&addressesObj.addressesSubObjs_keys)) {
-            let id = vector::borrow(&addressesObj.addressesSubObjs_keys, index);
-            let addressesSubObj = object_table::borrow(&addressesObj.addressesSubObjs_table, *id);
-            let subObjAddresses = addresses_sub_obj::get_addresses(addressesSubObj);
-            let subIndex = 0;
-            while (subIndex < vector::length(subObjAddresses)) {
-                let address = vector::borrow(subObjAddresses, subIndex);
-                vector::push_back(&mut all_addresses, *address);
-                subIndex = subIndex + 1;
-            };
-            index = index + 1;
-        };
-        return all_addresses
+        addresses_sub_obj::table_keys_get_all_addresses(
+            &addressesObj.addressesSubObjs_table, 
+            &addressesObj.addressesSubObjs_keys,
+        )
     }
     public fun getCreator<T>(
         addressesObj: &AddressesObj<T>,
@@ -195,6 +223,7 @@ module raffle::addresses_obj {
         {
             let addressesObj = test_scenario::take_from_address<AddressesObj<TEST_COIN>>(scenario, admin);
             finalize(&mut addressesObj, fee, test_scenario::ctx(scenario));
+            assert!(addressesObj.fee == fee, 0);
             transfer::public_transfer(addressesObj, host);
         };
 
@@ -202,8 +231,9 @@ module raffle::addresses_obj {
         {
             let addressesObj = test_scenario::take_from_address<AddressesObj<TEST_COIN>>(scenario, host);
             clear(&mut addressesObj);
+            setFee(&mut addressesObj, 0);
             assert!(vector::length(&addressesObj.addressesSubObjs_keys) == 0, 0);
-            test_scenario::return_to_address(host, addressesObj);
+            destroy(addressesObj);
         };
         test_scenario::end(scenario_val);
     }
