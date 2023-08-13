@@ -20,12 +20,9 @@ module raffle::addresses_obj {
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
     use std::vector;
+    use raffle::addresses_sub_obj::{Self, AddressesSubObj};
 
 
-    struct AddressesSubObj has key, store {
-        id: UID,
-        addresses: vector<address>,
-    }
     struct AddressesObj<phantom T> has key, store {
         id: UID,
         addressesSubObjs_table: ObjectTable<ID, AddressesSubObj>,
@@ -35,17 +32,13 @@ module raffle::addresses_obj {
     }
 
     public (friend) fun internal_create<T>(
-        participants: vector<address>,
+        addresses: vector<address>,
         ctx: &mut TxContext
     ): AddressesObj<T> {
-        let addressesSubObj = AddressesSubObj {
-            id: object::new(ctx),
-            addresses: participants,
-        };
-
         let addressesSubObjs_table = object_table::new<ID, AddressesSubObj>(ctx);
         let addressesSubObjs_keys = vector::empty<ID>();
         
+        let addressesSubObj = addresses_sub_obj::create(addresses, ctx);
         let id = object::id(&addressesSubObj);
         object_table::add(&mut addressesSubObjs_table, id, addressesSubObj);
         vector::push_back(&mut addressesSubObjs_keys, id);
@@ -78,17 +71,13 @@ module raffle::addresses_obj {
             vector::length(&addressesObj.addressesSubObjs_keys) - 1,
         );
         let latestSubObj = object_table::borrow_mut(&mut addressesObj.addressesSubObjs_table, *id);
-        if(vector::length(&latestSubObj.addresses) > 7500){
-            let addressesSubObj = AddressesSubObj {
-                id: object::new(ctx),
-                addresses: vector::empty(),
-            };
+        if(addresses_sub_obj::size(latestSubObj) + vector::length(&addresses) > 7600){
+            let addressesSubObj = addresses_sub_obj::create(addresses, ctx);
             let id = object::id(&addressesSubObj);
-            vector::append(&mut addressesSubObj.addresses, addresses);
             object_table::add(&mut addressesObj.addressesSubObjs_table, id, addressesSubObj);
             vector::push_back(&mut addressesObj.addressesSubObjs_keys, id);
         }else{
-            vector::append(&mut latestSubObj.addresses, addresses);
+            addresses_sub_obj::append(latestSubObj, addresses);
         }
     }
     public entry fun finalize<T>(
@@ -105,15 +94,10 @@ module raffle::addresses_obj {
         while (index < vector::length(&addressesObj.addressesSubObjs_keys)) {
             let id = vector::borrow(&addressesObj.addressesSubObjs_keys, index);
             let addressesSubObj = object_table::remove(&mut addressesObj.addressesSubObjs_table, *id);
-            addressesSubObj.addresses = vector::empty();
-            destroy_AddressesSubObj(addressesSubObj);
+            addresses_sub_obj::destroy(addressesSubObj);
             index = index + 1;
         };
         addressesObj.addressesSubObjs_keys = vector::empty();
-    }
-    fun destroy_AddressesSubObj(addressesSubObj:  AddressesSubObj){
-        let AddressesSubObj { id, addresses } = addressesSubObj;
-        object::delete(id)
     }
     public entry fun clearByCreator<T>(
         addressesObj: &mut AddressesObj<T>,
@@ -132,9 +116,10 @@ module raffle::addresses_obj {
         while (index < vector::length(&addressesObj.addressesSubObjs_keys)) {
             let id = vector::borrow(&addressesObj.addressesSubObjs_keys, index);
             let addressesSubObj = object_table::borrow(&addressesObj.addressesSubObjs_table, *id);
+            let subObjAddresses = addresses_sub_obj::get_addresses(addressesSubObj);
             let subIndex = 0;
-            while (subIndex < vector::length(&addressesSubObj.addresses)) {
-                let address = vector::borrow(&addressesSubObj.addresses, subIndex);
+            while (subIndex < vector::length(subObjAddresses)) {
+                let address = vector::borrow(subObjAddresses, subIndex);
                 vector::push_back(&mut all_addresses, *address);
                 subIndex = subIndex + 1;
             };
