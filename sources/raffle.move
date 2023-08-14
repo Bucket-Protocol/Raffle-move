@@ -88,6 +88,7 @@ module raffle::raffle {
         settler: address,
         addressesSubObjs_table: ObjectTable<ID, AddressesSubObj>,
         addressesSubObjs_keys: vector<ID>,
+        participantCount: u64,
         winnerCount: u64,
         winners: vector<address>,
         balance: Balance<T>,
@@ -126,7 +127,8 @@ module raffle::raffle {
         ctx: &mut TxContext
     ){
         let participants = addresses_sub_obj::table_keys_get_all_addresses(&addressesSubObjs_table, &addressesSubObjs_keys);
-        assert!(winnerCount <= vector::length(&participants), 0);
+        let participantCount = vector::length(&participants);
+        assert!(winnerCount <= participantCount, 0);
         let drand_current_round = get_current_round_by_time(clock::timestamp_ms(clock));
         let raffle: Raffle<T> = Raffle {
             id: object::new(ctx),
@@ -137,6 +139,7 @@ module raffle::raffle {
             settler: @0x00,
             addressesSubObjs_table,
             addressesSubObjs_keys,
+            participantCount,
             winnerCount,
             winners: vector::empty(),
             balance: coin::into_balance<T>(awardObject),

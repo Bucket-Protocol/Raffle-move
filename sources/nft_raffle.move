@@ -32,6 +32,7 @@ module raffle::nft_raffle {
         addressesSubObjs_keys: vector<ID>,
         reward_nfts: ObjectTable<ID, T>,
         reward_nfts_table_keys: vector<ID>,
+        participantCount: u64,
         winnerCount: u64,
         winners: vector<address>,
     }
@@ -93,8 +94,9 @@ module raffle::nft_raffle {
         ctx: &mut TxContext
     ){
         let participants = addresses_sub_obj::table_keys_get_all_addresses(&addressesSubObjs_table, &addressesSubObjs_keys);
+        let participantCount = vector::length(&participants);
         let winnerCount = vector::length(&reward_nfts_vec);
-        assert!(winnerCount <= vector::length(&participants), 0);
+        assert!(winnerCount <= participantCount, 0);
 
         let drand_current_round = get_current_round_by_time(clock::timestamp_ms(clock));
         
@@ -119,7 +121,8 @@ module raffle::nft_raffle {
             addressesSubObjs_keys,
             reward_nfts: reward_nfts,
             reward_nfts_table_keys: reward_nfts_table_keys,
-            winnerCount: winnerCount,
+            participantCount,
+            winnerCount,
             winners: vector::empty(),
         };
         emit_nft_raffle_created(&raffle);
