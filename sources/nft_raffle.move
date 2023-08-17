@@ -20,6 +20,7 @@ module raffle::nft_raffle {
     use std::string::{Self};
     use raffle::addresses_obj::{Self, AddressesObj};
     use raffle::addresses_sub_obj::{Self, AddressesSubObj};
+    use raffle::addresses_hash_proof;
     
     struct NFT_Raffle <phantom T: store + key> has key, store {
         id: UID,
@@ -50,7 +51,7 @@ module raffle::nft_raffle {
         creator: address,
         round: u64,
         participants_count: u64,
-        participants: vector<address>,
+        participants_hash_proof: vector<u8>,
         winnerCount: u64,
         prizeType: ASCIIString,
         reward_nft_ids: vector<ID>,
@@ -65,7 +66,7 @@ module raffle::nft_raffle {
             creator: raffle.creator,
             round: raffle.round,
             participants_count: vector::length(&participants_in_event),
-            participants: participants_in_event,
+            participants_hash_proof: addresses_hash_proof::hash_addresses(participants_in_event),
             winnerCount: raffle.winnerCount,
             prizeType: raffleType,
             reward_nft_ids: raffle.reward_nfts_table_keys,
@@ -75,12 +76,14 @@ module raffle::nft_raffle {
     struct NftRaffleSettled has copy, drop {
         raffle_id: ID,
         settler: address,
+        winners: vector<address>,
     }
     public fun emit_nft_raffle_settled<T: store + key>(raffle: &NFT_Raffle<T>) {
         let raffleId = *object::borrow_id(raffle);
         event::emit(NftRaffleSettled {
             raffle_id: raffleId,
             settler: raffle.settler,
+            winners: raffle.winners,
             }
         );
     }

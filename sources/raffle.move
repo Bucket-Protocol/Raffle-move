@@ -19,6 +19,7 @@ module raffle::raffle {
     use raffle::addresses_obj::{Self, AddressesObj};
     use raffle::addresses_sub_obj::{Self, AddressesSubObj};
     use sui::object_table::{Self, ObjectTable};
+    use raffle::addresses_hash_proof;
 
     struct TimeEvent has copy, drop, store { 
         timestamp_ms: u64,
@@ -42,7 +43,7 @@ module raffle::raffle {
         creator: address,
         round: u64,
         participants_count: u64,
-        participants: vector<address>,
+        participants_hash_proof: vector<u8>,
         winnerCount: u64,
         prizeAmount: u64,
         prizeType: ASCIIString,
@@ -58,7 +59,7 @@ module raffle::raffle {
             creator: raffle.creator,
             round: raffle.round,
             participants_count: vector::length(&participants),
-            participants: participants,
+            participants_hash_proof: addresses_hash_proof::hash_addresses(participants),
             winnerCount: raffle.winnerCount,
             prizeAmount: balance::value(&raffle.balance),
             prizeType: raffleType,
@@ -69,12 +70,14 @@ module raffle::raffle {
     struct CoinRaffleSettled has copy, drop {
         raffle_id: ID,
         settler: address,
+        winners: vector<address>,
     }
     public fun emit_coin_raffle_settled<T>(raffle: &Raffle<T>) {
         let raffleId = *object::borrow_id(raffle);
         event::emit(CoinRaffleSettled {
             raffle_id: raffleId,
             settler: raffle.settler,
+            winners: raffle.winners,
             }
         );
     }
