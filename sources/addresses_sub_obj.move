@@ -11,6 +11,8 @@ module raffle::addresses_sub_obj {
     use std::vector;
     use sui::tx_context::{Self, TxContext};
     use sui::object_table::{Self, ObjectTable};
+    use std::bcs;
+    use std::hash::{Self};
 
 
     struct AddressesSubObj has key, store {
@@ -106,5 +108,14 @@ module raffle::addresses_sub_obj {
             index = index + 1;
         };
         return all_addresses
+    }
+
+    #[test]
+    fun test() {
+        use raffle::test_coin::{Self, TEST_COIN};
+        use sui::test_scenario;
+        use sui::balance;
+        use std::debug;
+
     }
 }
