@@ -387,9 +387,7 @@ module raffle::raffle {
         let fee = 50000;
         {
             let addressesObj = test_scenario::take_from_address<AddressesObj<TEST_COIN>>(scenario, admin);
-            addresses_obj::finalize(&mut addressesObj, fee, test_scenario::ctx(scenario));
-            transfer::public_transfer(addressesObj, host);
-            
+            addresses_obj::finalize(addressesObj, fee, test_scenario::ctx(scenario));            
         };
         
 
@@ -400,11 +398,11 @@ module raffle::raffle {
             let coin = coin::from_balance(balance::create_for_testing<TEST_COIN>(totalPrize), test_scenario::ctx(scenario));
             let fee = coin::from_balance(balance::create_for_testing<TEST_COIN>(fee), test_scenario::ctx(scenario));
             let clockObj = clock::create_for_testing(test_scenario::ctx(scenario));
-            let addressesObj = test_scenario::take_from_address<AddressesObj<TEST_COIN>>(scenario, host);
+            let addressesObj = test_scenario::take_shared<AddressesObj<TEST_COIN>>(scenario);
             clock::set_for_testing(&mut clockObj, 1687974871000);
             create_coin_raffle_by_addresses_obj(b"TEST", &clockObj, &mut addressesObj, fee, winnerCount, coin, test_scenario::ctx(scenario));
             clock::destroy_for_testing(clockObj);
-            test_scenario::return_to_address(host, addressesObj);
+            test_scenario::return_shared(addressesObj);
         };
         test_scenario::next_tx(scenario, user1);
         {
