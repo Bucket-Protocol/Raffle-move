@@ -84,7 +84,22 @@ module raffle::addresses_obj {
     ){
         assert!(addressesObj.creator == tx_context::sender(ctx),1);
         setFee(&mut addressesObj, fee);
-        transfer::share_object(addressesObj);
+        let AddressesObj<T> {
+            id,
+            addressesSubObjs_table,
+            addressesSubObjs_keys,
+            creator,
+            fee
+        } = addressesObj;
+        object::delete(id);
+        let addressesObj = AddressesObj<T> {
+            id: object::new(ctx),
+            addressesSubObjs_table,
+            addressesSubObjs_keys,
+            creator,
+            fee,
+        };
+        transfer::public_share_object(addressesObj);
     }
 
     public (friend) fun setFee<T>(

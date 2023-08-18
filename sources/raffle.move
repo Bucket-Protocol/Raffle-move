@@ -43,7 +43,7 @@ module raffle::raffle {
         creator: address,
         round: u64,
         participants_count: u64,
-        participants_hash_proof: vector<u8>,
+        // participants_hash_proof: ID,
         winnerCount: u64,
         prizeAmount: u64,
         prizeType: ASCIIString,
@@ -53,13 +53,14 @@ module raffle::raffle {
         let raffleId = *object::borrow_id(raffle);
         let i = 0;
         let participants = getParticipants(raffle);
+        // let participants_hash_proof = object::id_from_bytes(addresses_hash_proof::hash_addresses(participants));
         event::emit(CoinRaffleCreated {
             raffle_id: raffleId,
             raffle_name: raffle.name,
             creator: raffle.creator,
             round: raffle.round,
             participants_count: vector::length(&participants),
-            participants_hash_proof: addresses_hash_proof::hash_addresses(participants),
+            // participants_hash_proof,
             winnerCount: raffle.winnerCount,
             prizeAmount: balance::value(&raffle.balance),
             prizeType: raffleType,
