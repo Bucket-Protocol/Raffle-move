@@ -91,6 +91,7 @@ module raffle::addresses_hash_proof {
         use sui::test_scenario;
         use sui::balance;
         use std::debug;
+        use std::string::{Self, String};
 
         // create test addresses representing users
         let user: address = @0x96d9a120058197fce04afcffa264f2f46747881ba78a91beb38f103c60e315ae;
@@ -99,6 +100,8 @@ module raffle::addresses_hash_proof {
         vector::push_back(&mut addresses, user);
         vector::push_back(&mut addresses, user);
         let hash = hash_addresses(addresses);
+        let stringHash = object::id_from_bytes(hash);
+        // debug::print(&stringHash);
         assert!(hash == x"6ac15cfb5b577f6ed7b38e6a5ee24c1e37f0d94115e088ea31d88c69e664ac8b", 0);
         
         let user: address = @0x04d626ce8938318165fab01491095329aee67fd017a4a17fe2c981b8a9a569cc;

@@ -51,7 +51,7 @@ module raffle::nft_raffle {
         creator: address,
         round: u64,
         participants_count: u64,
-        participants_hash_proof: vector<u8>,
+        // participants_hash_proof: ID,
         winnerCount: u64,
         prizeType: ASCIIString,
         reward_nft_ids: vector<ID>,
@@ -59,14 +59,15 @@ module raffle::nft_raffle {
     public fun emit_nft_raffle_created<T: store + key>(raffle: &NFT_Raffle<T>) {
         let raffleType = type_name::into_string(type_name::get<T>());
         let raffleId = *object::borrow_id(raffle);
-        let participants_in_event = getParticipants(raffle);
+        let participants = getParticipants(raffle);
+        // let participants_hash_proof = object::id_from_bytes(addresses_hash_proof::hash_addresses(participants));
         event::emit(NftRaffleCreated {
             raffle_id: raffleId,
             raffle_name: raffle.name,
             creator: raffle.creator,
             round: raffle.round,
-            participants_count: vector::length(&participants_in_event),
-            participants_hash_proof: addresses_hash_proof::hash_addresses(participants_in_event),
+            participants_count: vector::length(&participants),
+            // participants_hash_proof,
             winnerCount: raffle.winnerCount,
             prizeType: raffleType,
             reward_nft_ids: raffle.reward_nfts_table_keys,

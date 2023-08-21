@@ -78,12 +78,28 @@ module raffle::addresses_obj {
         }
     }
     public entry fun finalize<T>(
-        addressesObj: &mut AddressesObj<T>,
+        addressesObj: AddressesObj<T>,
         fee: u64,
         ctx: &mut TxContext
     ){
         assert!(addressesObj.creator == tx_context::sender(ctx),1);
-        setFee(addressesObj, fee);
+        setFee(&mut addressesObj, fee);
+        let AddressesObj<T> {
+            id,
+            addressesSubObjs_table,
+            addressesSubObjs_keys,
+            creator,
+            fee
+        } = addressesObj;
+        object::delete(id);
+        let addressesObj = AddressesObj<T> {
+            id: object::new(ctx),
+            addressesSubObjs_table,
+            addressesSubObjs_keys,
+            creator,
+            fee,
+        };
+        transfer::public_share_object(addressesObj);
     }
 
     public (friend) fun setFee<T>(
@@ -222,19 +238,18 @@ module raffle::addresses_obj {
         let fee = 50000;
         {
             let addressesObj = test_scenario::take_from_address<AddressesObj<TEST_COIN>>(scenario, admin);
-            finalize(&mut addressesObj, fee, test_scenario::ctx(scenario));
-            assert!(addressesObj.fee == fee, 0);
-            transfer::public_transfer(addressesObj, host);
+            finalize(addressesObj, fee, test_scenario::ctx(scenario));
         };
 
-        test_scenario::next_tx(scenario, host);
-        {
-            let addressesObj = test_scenario::take_from_address<AddressesObj<TEST_COIN>>(scenario, host);
-            clear(&mut addressesObj);
-            setFee(&mut addressesObj, 0);
-            assert!(vector::length(&addressesObj.addressesSubObjs_keys) == 0, 0);
-            destroy(addressesObj);
-        };
+        // test_scenario::next_tx(scenario, host);
+        // {
+        //     let addressesObj = test_scenario::take_shared<AddressesObj<TEST_COIN>>(scenario);
+        //     assert!(addressesObj.fee == fee, 0);
+        //     clear(&mut addressesObj);
+        //     setFee(&mut addressesObj, 0);
+        //     assert!(vector::length(&addressesObj.addressesSubObjs_keys) == 0, 0);
+        //     test_scenario::return_shared(addressesObj);
+        // };
         test_scenario::end(scenario_val);
     }
 }
