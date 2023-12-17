@@ -15,21 +15,17 @@ module raffle::addresses_hash_proof {
     use std::hash::{Self};
     // use std::debug;
 
-    public fun hash_addresses(addresses: vector<address>): vector<u8> {
-        let all_bytes = vector::empty<u8>();
-        let index = 0;
-        let len = vector::length(&addresses);
-        while(index < len) {
-            let byte = bcs::to_bytes(vector::borrow(&addresses, index));
-            vector::append(&mut all_bytes, byte);
-            index = index + 1
-        };
-        return hash::sha3_256(all_bytes)
-    }
-
-    fun hash_pair(a: vector<u8>, b: vector<u8>): vector<u8> {
-        return efficient_hash(a, b)
-    }
+    // public fun hash_addresses(addresses: vector<address>): vector<u8> {
+    //     let all_bytes = vector::empty<u8>();
+    //     let index = 0;
+    //     let len = vector::length(&addresses);
+    //     while(index < len) {
+    //         let byte = bcs::to_bytes(vector::borrow(&addresses, index));
+    //         vector::append(&mut all_bytes, byte);
+    //         index = index + 1
+    //     };
+    //     return hash::sha3_256(all_bytes)
+    // }
 
     fun efficient_hash(a: vector<u8>, b: vector<u8>): vector<u8> {
         vector::append(&mut a, b);
@@ -49,7 +45,7 @@ module raffle::addresses_hash_proof {
         let computed_hash = leaf;
         while (index < proof_len) {
             let proof = vector::borrow_mut(&mut proofs, index);
-            computed_hash = hash_pair(computed_hash, *proof);
+            computed_hash = efficient_hash(computed_hash, *proof);
             index = index + 1
         };
         return computed_hash
@@ -99,10 +95,10 @@ module raffle::addresses_hash_proof {
         vector::push_back(&mut addresses, user);
         vector::push_back(&mut addresses, user);
         vector::push_back(&mut addresses, user);
-        let hash = hash_addresses(addresses);
-        let stringHash = object::id_from_bytes(hash);
-        // debug::print(&stringHash);
-        assert!(hash == x"6ac15cfb5b577f6ed7b38e6a5ee24c1e37f0d94115e088ea31d88c69e664ac8b", 0);
+        // let hash = hash_addresses(addresses);
+        // let stringHash = object::id_from_bytes(hash);
+        // // debug::print(&stringHash);
+        // assert!(hash == x"6ac15cfb5b577f6ed7b38e6a5ee24c1e37f0d94115e088ea31d88c69e664ac8b", 0);
         
         let user: address = @0x04d626ce8938318165fab01491095329aee67fd017a4a17fe2c981b8a9a569cc;
         let i: u64 = 0;
