@@ -220,7 +220,6 @@ module raffle::raffle {
         use raffle::test_coin::{TEST_COIN};
         use sui::test_scenario;
         use sui::balance;
-        use std::debug;
         
         // create test addresses representing users
         let admin = @0xad;
@@ -255,12 +254,9 @@ module raffle::raffle {
                 module_type = string::sub_string(&type_string, 0, 76);
             };
             
-            
-            // debug::print(&type_string);
-            debug::print(&module_type);
             // string::length(&)
             let isCoin = module_type == string::utf8(b"0000000000000000000000000000000000000000000000000000000000000002::coin::Coin");
-            debug::print(&isCoin);
+            
             
             
             let participants = vector::empty<address>();
@@ -316,7 +312,7 @@ module raffle::raffle {
 
         test_scenario::end(scenario_val);
     }
-    
+
     #[test]
     fun test_raffle_by_addressesObj() {
         use raffle::test_coin::{TEST_COIN};
