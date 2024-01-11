@@ -15,6 +15,7 @@ module raffle::drand_lib {
         x"868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31";
 
     const DRAND_Initial_Start_Time: u64 = 1595431021000;
+    
     /// Check that a given epoch time has passed by verifying a drand signature from a later time.
     /// round must be at least (epoch_time - GENESIS)/30 + 1).
     public fun verify_time_has_passed(epoch_time: u64, sig: vector<u8>, prev_sig: vector<u8>, round: u64) {
@@ -25,10 +26,12 @@ module raffle::drand_lib {
     public fun get_current_round_by_time(timestamp_ms: u64): u64{
         (timestamp_ms - DRAND_Initial_Start_Time)/30000
     }
+
     /// Check a drand output.
     public entry fun just_check_drand(drand_sig: vector<u8>, drand_prev_sig: vector<u8>, round: u64) {
         verify_drand_signature(drand_sig, drand_prev_sig, round);
     }
+
     public fun verify_drand_signature(sig: vector<u8>, prev_sig: vector<u8>, round: u64) {
         // Convert round to a byte array in big-endian order.
         let round_bytes: vector<u8> = vector[0, 0, 0, 0, 0, 0, 0, 0];
@@ -74,6 +77,7 @@ module raffle::drand_lib {
         let res = (module_128 as u64);
         res
     }
+
     #[test]
     fun test_init() {
         use sui::test_scenario;

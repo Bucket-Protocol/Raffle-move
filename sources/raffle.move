@@ -15,7 +15,6 @@ module raffle::raffle {
     use raffle::addresses_sub_obj::{Self, AddressesSubObj};
     use sui::object_table::{ObjectTable};
     
-
     struct TimeEvent has copy, drop, store { 
         timestamp_ms: u64,
         expect_current_round: u64,
@@ -112,7 +111,6 @@ module raffle::raffle {
         internal_create_coin_raffle(name, clock, addressesSubObjs_table, addressesSubObjs_keys, winnerCount, awardObject, ctx);
     }
     
-
     fun internal_create_coin_raffle<T>(
         name: vector<u8>, 
         clock: &Clock,
@@ -143,6 +141,7 @@ module raffle::raffle {
         emit_coin_raffle_created(&raffle);
         transfer::public_share_object(raffle);
     }
+
     public entry fun create_coin_raffle_by_addresses_obj<T, F>(
         name: vector<u8>, 
         clock: &Clock,
@@ -314,29 +313,10 @@ module raffle::raffle {
             assert!(balance::value(coin::balance(&coin7)) == totalPrize - (totalPrize / winnerCount)*(winnerCount - 1), 0);
             test_scenario::return_to_address(user7, coin7);
         };
-        // {
-        //     // let coin1 = test_scenario::take_from_address<TEST_COIN>(scenario, user1);
-        //     // assert!(balance::value(&coin1) == 0, 0);
-        // }
-        // {
-        //     let managerCap = test_scenario::take_from_sender<ManagerCap>(scenario);
-        //     let participants = vector::new();
-        //     create_raffle(1, vector::new(), 1, Coin::new(100), test_scenario::ctx(scenario));
-        //     test_scenario::return_to_sender(scenario, managerCap);
-            
-        // };
-        // test_scenario::next_tx(scenario, host);
-        // {
-        //     let hostCap = test_scenario::take_from_sender<HostCap>(scenario);
-        //     let userTable = test_scenario::take_shared<UserTable>(scenario);
-        //     // charge_from_users(&hostCap, &mut userTable, test_scenario::ctx(scenario));
-            
-        //     test_scenario::return_to_sender(scenario, hostCap);
-        //     test_scenario::return_shared(userTable);
-        // };
-        
+
         test_scenario::end(scenario_val);
     }
+    
     #[test]
     fun test_raffle_by_addressesObj() {
         use raffle::test_coin::{TEST_COIN};

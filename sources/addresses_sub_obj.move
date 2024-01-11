@@ -21,6 +21,7 @@ module raffle::addresses_sub_obj {
             addresses: addresses,
         }
     }
+
     public (friend) fun append(
         addressesSubObj: &mut AddressesSubObj,
         addresses: vector<address>,
@@ -40,6 +41,7 @@ module raffle::addresses_sub_obj {
     ):&vector<address>{
         &addressesSubObj.addresses
     }
+
     public (friend) fun get_addresses_mut(
         addressesSubObj: &mut AddressesSubObj,
     ):&mut vector<address>{
@@ -64,6 +66,7 @@ module raffle::addresses_sub_obj {
         vector::push_back(&mut addressesSubObjs_keys, id);
         return (addressesSubObjs_table, addressesSubObjs_keys)
     }
+
     public (friend) fun table_keys_get_all_addresses(
         addressesSubObjs_table: &ObjectTable<ID, AddressesSubObj>,
         addressesSubObjs_keys: &vector<ID>,
@@ -84,6 +87,7 @@ module raffle::addresses_sub_obj {
         };
         return all_addresses
     }
+    
     public (friend) fun table_keys_clear(
         addressesSubObjs_table: &mut ObjectTable<ID, AddressesSubObj>,
         addressesSubObjs_keys: &mut vector<ID>,

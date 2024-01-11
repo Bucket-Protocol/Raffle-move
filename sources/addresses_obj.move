@@ -89,7 +89,7 @@ module raffle::addresses_obj {
         };
         transfer::public_share_object(addressesObj);
     }
-
+    
     public (friend) fun setFee<T>(
         addressesObj: &mut AddressesObj<T>,
         fee: u64,
@@ -130,6 +130,7 @@ module raffle::addresses_obj {
         addressesObj.addressesSubObjs_keys = vector::empty();
         return (out_table, out_keys)
     }
+
     public (friend) fun clear<T>(
         addressesObj: &mut AddressesObj<T>,
     ){

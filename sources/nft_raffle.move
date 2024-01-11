@@ -50,6 +50,7 @@ module raffle::nft_raffle {
         prizeType: ASCIIString,
         reward_nft_ids: vector<ID>,
     }
+
     public fun emit_nft_raffle_created<T: store + key>(raffle: &NFT_Raffle<T>) {
         let raffleType = type_name::into_string(type_name::get<T>());
         let raffleId = *object::borrow_id(raffle);
@@ -67,6 +68,7 @@ module raffle::nft_raffle {
             }
         );
     }
+
     struct NftRaffleSettled has copy, drop {
         raffle_id: ID,
         settler: address,
@@ -126,6 +128,7 @@ module raffle::nft_raffle {
         transfer::public_share_object(raffle);
         vector::destroy_empty(reward_nfts_vec);
     }
+
     public entry fun create_nft_raffle_by_addresses_obj<T: store + key, F: drop>(
         name: vector<u8>,
         clock: &Clock,
@@ -140,6 +143,7 @@ module raffle::nft_raffle {
         let (addressesSubObjs_table, addressesSubObjs_keys) = addresses_obj::pop_all(addressesObj, ctx);
         internal_create_nft_raffle(name, clock, addressesSubObjs_table, addressesSubObjs_keys, reward_nfts_vec, ctx);
     }
+    
     public entry fun create_nft_raffle<T: store + key>(
         name: vector<u8>,
         clock: &Clock,
