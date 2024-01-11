@@ -1,27 +1,16 @@
-// Copyright (c) Mysten Labs, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
-/// Example of objects that can be combined to create
-/// new objects
 module raffle::addresses_sub_obj {
     friend raffle::nft_raffle;
     friend raffle::raffle;
     friend raffle::addresses_obj;
     use sui::object::{Self, ID, UID};
     use std::vector;
-    use sui::tx_context::{Self, TxContext};
+    use sui::tx_context::{TxContext};
     use sui::object_table::{Self, ObjectTable};
-    use std::bcs;
-    use std::hash::{Self};
-
 
     struct AddressesSubObj has key, store {
         id: UID,
         addresses: vector<address>,
     }
-
-    
-
 
     public (friend) fun create(
         addresses: vector<address>,
@@ -32,6 +21,7 @@ module raffle::addresses_sub_obj {
             addresses: addresses,
         }
     }
+
     public (friend) fun append(
         addressesSubObj: &mut AddressesSubObj,
         addresses: vector<address>,
@@ -51,6 +41,7 @@ module raffle::addresses_sub_obj {
     ):&vector<address>{
         &addressesSubObj.addresses
     }
+
     public (friend) fun get_addresses_mut(
         addressesSubObj: &mut AddressesSubObj,
     ):&mut vector<address>{
@@ -58,7 +49,7 @@ module raffle::addresses_sub_obj {
     }
 
     public (friend) fun destroy(addressesSubObj:  AddressesSubObj){
-        let AddressesSubObj { id, addresses } = addressesSubObj;
+        let AddressesSubObj { id, addresses: _ } = addressesSubObj;
         object::delete(id)
     }
 
@@ -75,6 +66,7 @@ module raffle::addresses_sub_obj {
         vector::push_back(&mut addressesSubObjs_keys, id);
         return (addressesSubObjs_table, addressesSubObjs_keys)
     }
+
     public (friend) fun table_keys_get_all_addresses(
         addressesSubObjs_table: &ObjectTable<ID, AddressesSubObj>,
         addressesSubObjs_keys: &vector<ID>,
@@ -95,6 +87,7 @@ module raffle::addresses_sub_obj {
         };
         return all_addresses
     }
+    
     public (friend) fun table_keys_clear(
         addressesSubObjs_table: &mut ObjectTable<ID, AddressesSubObj>,
         addressesSubObjs_keys: &mut vector<ID>,
@@ -112,10 +105,5 @@ module raffle::addresses_sub_obj {
 
     #[test]
     fun test() {
-        use raffle::test_coin::{Self, TEST_COIN};
-        use sui::test_scenario;
-        use sui::balance;
-        use std::debug;
-
     }
 }

@@ -1,20 +1,6 @@
-// Copyright (c) Mysten Labs, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
-/// Example of objects that can be combined to create
-/// new objects
 module raffle::addresses_obj {
     friend raffle::nft_raffle;
     friend raffle::raffle;
-    
-    use sui::clock::{Self, Clock};
-    use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection, get_current_round_by_time};
-    use sui::balance::{Self, Balance};
-    use sui::coin::{Self, Coin};
-    use std::string::{Self, String};
-    use std::ascii::String as ASCIIString;
-    use sui::event;
-    use std::type_name;
     use sui::object::{Self, ID, UID};
     use sui::object_table::{Self, ObjectTable};
     use sui::transfer;
@@ -50,6 +36,7 @@ module raffle::addresses_obj {
         };
         return addressesObj
     }
+
     public entry fun create<T>(
         participants: vector<address>,
         ctx: &mut TxContext
@@ -77,6 +64,7 @@ module raffle::addresses_obj {
             addresses_sub_obj::append(latestSubObj, addresses);
         }
     }
+
     public entry fun finalize<T>(
         addressesObj: AddressesObj<T>,
         fee: u64,
@@ -101,7 +89,7 @@ module raffle::addresses_obj {
         };
         transfer::public_share_object(addressesObj);
     }
-
+    
     public (friend) fun setFee<T>(
         addressesObj: &mut AddressesObj<T>,
         fee: u64,
@@ -117,8 +105,8 @@ module raffle::addresses_obj {
             id,
             addressesSubObjs_table,
             addressesSubObjs_keys,
-            creator,
-            fee
+            creator: _,
+            fee: _
         } = addressesObj;
         object::delete(id);
         addresses_sub_obj::table_keys_clear(&mut addressesSubObjs_table, &mut addressesSubObjs_keys);
@@ -142,6 +130,7 @@ module raffle::addresses_obj {
         addressesObj.addressesSubObjs_keys = vector::empty();
         return (out_table, out_keys)
     }
+
     public (friend) fun clear<T>(
         addressesObj: &mut AddressesObj<T>,
     ){
@@ -154,6 +143,7 @@ module raffle::addresses_obj {
         };
         addressesObj.addressesSubObjs_keys = vector::empty();
     }
+
     public entry fun clearByCreator<T>(
         addressesObj: &mut AddressesObj<T>,
         ctx: &mut TxContext
@@ -162,7 +152,6 @@ module raffle::addresses_obj {
         clear(addressesObj);
     }
     
-
     public fun getAddresses<T>(
         addressesObj: &AddressesObj<T>,
     ): vector<address> {
@@ -171,11 +160,13 @@ module raffle::addresses_obj {
             &addressesObj.addressesSubObjs_keys,
         )
     }
+
     public fun getCreator<T>(
         addressesObj: &AddressesObj<T>,
     ): address {
         return addressesObj.creator
     }
+    
     public fun getFee<T>(
         addressesObj: &AddressesObj<T>,
     ): u64 {
@@ -184,14 +175,11 @@ module raffle::addresses_obj {
 
     #[test]
     fun test() {
-        use raffle::test_coin::{Self, TEST_COIN};
+        use raffle::test_coin::{TEST_COIN};
         use sui::test_scenario;
-        use sui::balance;
-        use std::debug;
 
         // create test addresses representing users
         let admin = @0xad;
-        let host = @0xac;
         let user1 = @0xCAF1;
         let user2 = @0xCAF2;
         let user3 = @0xCAF3;
@@ -241,15 +229,6 @@ module raffle::addresses_obj {
             finalize(addressesObj, fee, test_scenario::ctx(scenario));
         };
 
-        // test_scenario::next_tx(scenario, host);
-        // {
-        //     let addressesObj = test_scenario::take_shared<AddressesObj<TEST_COIN>>(scenario);
-        //     assert!(addressesObj.fee == fee, 0);
-        //     clear(&mut addressesObj);
-        //     setFee(&mut addressesObj, 0);
-        //     assert!(vector::length(&addressesObj.addressesSubObjs_keys) == 0, 0);
-        //     test_scenario::return_shared(addressesObj);
-        // };
         test_scenario::end(scenario_val);
     }
 }
