@@ -1,7 +1,7 @@
 module raffle::nft_raffle {
     use sui::clock::{Self, Clock};
     use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection, get_current_round_by_time};
-    use sui::balance::{Self, Balance};
+    use sui::balance::{Self};
     use sui::coin::{Self, Coin};
     use sui::object::{Self, ID, UID};
     use sui::object_table::{Self, ObjectTable};
@@ -198,11 +198,11 @@ module raffle::nft_raffle {
         emit_nft_raffle_settled(raffle);
     }
 
-    fun getParticipants<T: key+store>(raffle: &NFT_Raffle<T>):vector<address> {
+    public fun getParticipants<T: key+store>(raffle: &NFT_Raffle<T>):vector<address> {
         addresses_sub_obj::table_keys_get_all_addresses(&raffle.addressesSubObjs_table, &raffle.addressesSubObjs_keys)
     }
 
-    fun getWinners<T: key+store>(raffle: &NFT_Raffle<T>):vector<address> {
+    public fun getWinners<T: key+store>(raffle: &NFT_Raffle<T>):vector<address> {
         raffle.winners
     }
 }

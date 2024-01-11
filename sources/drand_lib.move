@@ -30,9 +30,6 @@ module raffle::drand_lib {
         verify_drand_signature(drand_sig, drand_prev_sig, round);
     }
     public fun verify_drand_signature(sig: vector<u8>, prev_sig: vector<u8>, round: u64) {
-
-        // debug::print( &sig);
-        // debug::print(&prev_sig);
         // Convert round to a byte array in big-endian order.
         let round_bytes: vector<u8> = vector[0, 0, 0, 0, 0, 0, 0, 0];
         let i = 7;

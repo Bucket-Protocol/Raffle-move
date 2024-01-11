@@ -36,6 +36,7 @@ module raffle::addresses_obj {
         };
         return addressesObj
     }
+
     public entry fun create<T>(
         participants: vector<address>,
         ctx: &mut TxContext
@@ -63,6 +64,7 @@ module raffle::addresses_obj {
             addresses_sub_obj::append(latestSubObj, addresses);
         }
     }
+
     public entry fun finalize<T>(
         addressesObj: AddressesObj<T>,
         fee: u64,
@@ -103,8 +105,8 @@ module raffle::addresses_obj {
             id,
             addressesSubObjs_table,
             addressesSubObjs_keys,
-            creator,
-            fee
+            creator: _,
+            fee: _
         } = addressesObj;
         object::delete(id);
         addresses_sub_obj::table_keys_clear(&mut addressesSubObjs_table, &mut addressesSubObjs_keys);
@@ -140,6 +142,7 @@ module raffle::addresses_obj {
         };
         addressesObj.addressesSubObjs_keys = vector::empty();
     }
+
     public entry fun clearByCreator<T>(
         addressesObj: &mut AddressesObj<T>,
         ctx: &mut TxContext
@@ -148,7 +151,6 @@ module raffle::addresses_obj {
         clear(addressesObj);
     }
     
-
     public fun getAddresses<T>(
         addressesObj: &AddressesObj<T>,
     ): vector<address> {
@@ -157,11 +159,13 @@ module raffle::addresses_obj {
             &addressesObj.addressesSubObjs_keys,
         )
     }
+
     public fun getCreator<T>(
         addressesObj: &AddressesObj<T>,
     ): address {
         return addressesObj.creator
     }
+    
     public fun getFee<T>(
         addressesObj: &AddressesObj<T>,
     ): u64 {
@@ -172,12 +176,9 @@ module raffle::addresses_obj {
     fun test() {
         use raffle::test_coin::{TEST_COIN};
         use sui::test_scenario;
-        use sui::balance;
-        use std::debug;
 
         // create test addresses representing users
         let admin = @0xad;
-        let host = @0xac;
         let user1 = @0xCAF1;
         let user2 = @0xCAF2;
         let user3 = @0xCAF3;
@@ -226,7 +227,7 @@ module raffle::addresses_obj {
             let addressesObj = test_scenario::take_from_address<AddressesObj<TEST_COIN>>(scenario, admin);
             finalize(addressesObj, fee, test_scenario::ctx(scenario));
         };
-        
+
         test_scenario::end(scenario_val);
     }
 }

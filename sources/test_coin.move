@@ -1,9 +1,9 @@
 #[test_only]
 module raffle::test_coin {
-    use sui::coin::{Self, Coin};
+    use sui::coin::{Self};
     use std::option::{Self};
     use sui::transfer;    
-    use sui::tx_context::{TxContext};
+    use sui::tx_context::{Self, TxContext};
     
     struct TEST_COIN has drop {}
     
@@ -17,7 +17,7 @@ module raffle::test_coin {
             option::none(), 
             ctx
         );
-        transfer::public_share_object(treasury_cap);
+        transfer::public_transfer(treasury_cap, tx_context::sender(ctx));
         transfer::public_share_object(metadata);
     }
 }
