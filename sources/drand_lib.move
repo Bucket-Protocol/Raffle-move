@@ -1,11 +1,3 @@
-// Copyright (c) Mysten Labs, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
-/// Helper module for working with drand outputs.
-/// Currently works with chain 8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce.
-///
-/// See examples in drand_based_lottery.move.
-///
 module raffle::drand_lib {
     use std::hash::sha2_256;
     use std::vector;
@@ -90,12 +82,9 @@ module raffle::drand_lib {
         use sui::test_scenario;
         // create test addresses representing users
         let admin = @0xad;
-        let host = @0xac;
-        let user1 = @0xCAFE;
-        let user2 = @0xCAFF;
         // first transaction to emulate module initialization
         let scenario_val = test_scenario::begin(admin);
-        let scenario = &mut scenario_val;
+        // let scenario = &mut scenario_val;
         
         {
             verify_drand_signature(

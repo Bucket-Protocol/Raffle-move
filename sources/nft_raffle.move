@@ -1,8 +1,3 @@
-// Copyright (c) Mysten Labs, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
-/// Example of objects that can be combined to create
-/// new objects
 module raffle::nft_raffle {
     use sui::clock::{Self, Clock};
     use raffle::drand_lib::{derive_randomness, verify_drand_signature, safe_selection, get_current_round_by_time};
@@ -20,7 +15,6 @@ module raffle::nft_raffle {
     use std::string::{Self};
     use raffle::addresses_obj::{Self, AddressesObj};
     use raffle::addresses_sub_obj::{Self, AddressesSubObj};
-    use raffle::addresses_hash_proof;
     
     struct NFT_Raffle <phantom T: store + key> has key, store {
         id: UID,
@@ -60,7 +54,6 @@ module raffle::nft_raffle {
         let raffleType = type_name::into_string(type_name::get<T>());
         let raffleId = *object::borrow_id(raffle);
         let participants = getParticipants(raffle);
-        // let participants_hash_proof = object::id_from_bytes(addresses_hash_proof::hash_addresses(participants));
         event::emit(NftRaffleCreated {
             raffle_id: raffleId,
             raffle_name: raffle.name,

@@ -1,27 +1,16 @@
-// Copyright (c) Mysten Labs, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
-/// Example of objects that can be combined to create
-/// new objects
 module raffle::addresses_sub_obj {
     friend raffle::nft_raffle;
     friend raffle::raffle;
     friend raffle::addresses_obj;
     use sui::object::{Self, ID, UID};
     use std::vector;
-    use sui::tx_context::{Self, TxContext};
+    use sui::tx_context::{TxContext};
     use sui::object_table::{Self, ObjectTable};
-    use std::bcs;
-    use std::hash::{Self};
-
 
     struct AddressesSubObj has key, store {
         id: UID,
         addresses: vector<address>,
     }
-
-    
-
 
     public (friend) fun create(
         addresses: vector<address>,
@@ -58,7 +47,7 @@ module raffle::addresses_sub_obj {
     }
 
     public (friend) fun destroy(addressesSubObj:  AddressesSubObj){
-        let AddressesSubObj { id, addresses } = addressesSubObj;
+        let AddressesSubObj { id, addresses: _ } = addressesSubObj;
         object::delete(id)
     }
 
@@ -112,10 +101,5 @@ module raffle::addresses_sub_obj {
 
     #[test]
     fun test() {
-        use raffle::test_coin::{Self, TEST_COIN};
-        use sui::test_scenario;
-        use sui::balance;
-        use std::debug;
-
     }
 }
